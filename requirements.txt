@@ -1,0 +1,11 @@
+numpy
+pandas
+torch
+gpytorch
+scikit-learn
+scipy
+matplotlib
+seaborn
+tqdm
+umap-learn
+lightning_lite

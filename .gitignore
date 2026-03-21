@@ -1,0 +1,7 @@
+__pycache__/
+logs/
+results/
+data/splits/
+master_results.csv
+.DS_Store
+._*
