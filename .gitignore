@@ -2,6 +2,11 @@ __pycache__/
 logs/
 results/
 data/splits/
+data/raws/prev/
 master_results.csv
 .DS_Store
 ._*
+.claude/
+.codex/
+papers/
+*.tex

@@ -2673,7 +2673,7 @@ if __name__ == '__main__':
         device = torch.device('cpu')
     num_gpus = torch.cuda.device_count()
 
-    embedding_types = ['fa']
+    embedding_types = ['raw']
     use_snn_options = [True]
     model_types = ['standard']
     output_dims = [16]
