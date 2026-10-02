@@ -166,7 +166,7 @@
     },
     {
       "path": "figures/build.py",
-      "sha256": "336803466c0c2a45352ba8dd59aea12d96e082cfd20d4d5e7c626f6772568bfc"
+      "sha256": "1d817e4e783598d046fed491cacdc1e47e69244c7cc24483c56796ab07997400"
     },
     {
       "path": "figures/checks.py",
@@ -186,7 +186,7 @@
     },
     {
       "path": "figures/render.py",
-      "sha256": "eef115cd79e147d6f0341d72617f4fa2a76997b2a0293f725251ef7a2466db04"
+      "sha256": "ccfa2dcb5bbb41f7ce79243464e755be949b17726f052c856e98991f5156d933"
     },
     {
       "path": "figures/run.py",
@@ -198,7 +198,7 @@
     },
     {
       "path": "figures/tables.py",
-      "sha256": "e36f7f9cfcf5c4015b65c167d69808457f66f378394df24adc7ec1782bf4b2a0"
+      "sha256": "8511f6f4c5b3608e77f28a850a0e72800ba74bd411bc970157f2511d09e8bcd8"
     },
     {
       "path": "preparation/README.md",

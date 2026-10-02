@@ -137,12 +137,11 @@ def scregnet(build, completion):
          "mHSC-E means and split ranges; BEACON and both prior controls are recomputed, and saved scRegNet scores are checked against the same pair identities.")
 
 def expression(build, metrics):
-    frame = metrics[(metrics.suite == "expression_controls") & metrics.method.isin(
-        ["beacon_gp", "beacon_decoder", "gnnlink", "genelink", "gclink"]) & metrics.run.str.match(
-        r"c\.8/DS\d+_s\d+_beacon_(real|cell_shuffled|gene_permuted|random)$")].copy()
-    frame["dataset_id"] = frame.run.str.extract(r"DS(\d+)")[0].astype(int)
+    cohort = metrics[(metrics.suite == "expression_controls") & metrics.coverage.eq(.8) & metrics.opt_seed.eq(42)].copy()
+    cohort["dataset_id"] = cohort.dataset_id.astype(int)
+    frame = cohort[cohort.method.isin(["beacon_gp", "beacon_decoder", "gnnlink", "genelink", "gclink"]) &
+                   cohort.control.isin(["real", "cell_shuffled", "gene_permuted", "random"])].copy()
     frame["context"] = frame.dataset_id.map(CONTEXT)
-    frame["control"] = frame.run.str.extract(r"_beacon_(.*)$")[0]
     rows, blocks = [], {}
     methods = {"beacon_gp": "BEACON", "beacon_decoder": "BEACON pair decoder", "gnnlink": "GNNLink",
                "genelink": "GENELink", "gclink": "GCLink"}
@@ -157,8 +156,7 @@ def expression(build, metrics):
                 raise ValueError("Expression table missing context/split")
             values = part.groupby("context").auprc_trapezoid.mean()
             rows.append([display if control == "real" else "", label, *[number(values[c], 3) for c in CONTEXT.values()]])
-    pops = metrics[(metrics.suite == "expression_controls") & metrics.method.isin(POP) & metrics.run.str.match(r"c\.8/DS\d+_s\d+_beacon_real$")].copy()
-    pops["dataset_id"] = pops.run.str.extract(r"DS(\d+)")[0].astype(int)
+    pops = cohort[cohort.method.isin(POP) & cohort.control.eq("real")]
     for method, part in pops.groupby("method"):
         if len(part) != 12:
             raise ValueError("Expression popularity controls need 12 real-input runs")
@@ -208,4 +206,3 @@ def response_tables(build):
          "donor QC counts and configured tested/supported discovery counts",
          "T-cell eligibility: primary paired-donor definition. Donor metadata is unchanged; tested discovery denominators "
          "and responses come directly from the response evaluation: 3,043 resting and 1,015 re-stimulated responses.", True)
-

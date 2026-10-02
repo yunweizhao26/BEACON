@@ -96,7 +96,9 @@ class Build:
         metadata = self.csv("summary/completion_runs.csv")
         keys = ["run", "dataset_id", "split_seed", "coverage", "ratio", "corruption", "variant"]
         meta = metadata[keys].drop_duplicates()
-        completion = frame[frame.suite.eq("completion")].merge(meta, on="run", validate="many_to_one")
+        completion = frame[frame.suite.eq("completion")].drop(
+            columns=["dataset_id", "split_seed", "coverage", "control", "opt_seed"]
+        ).merge(meta, on="run", validate="many_to_one")
         if len(completion) != frame.suite.eq("completion").sum():
             raise ValueError("Completion metadata join lost rows")
         return frame, completion

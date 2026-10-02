@@ -418,7 +418,7 @@ def sampled_figures(build, metrics):
     source = build.csv("comparators/sampled_pairs/beeline_topology_associations_source.csv")
     template = source[source.method.eq("BEACON")].set_index("dataset_id")
     sampled = metrics[metrics.suite.eq("sampled_pair")].copy()
-    sampled["dataset_id"] = sampled.run.str.extract(r"DS(\d+)")[0].astype(int)
+    sampled["dataset_id"] = sampled.dataset_id.astype(int)
     predictions = []
     for e in build.bundle.manifest["experiments"]:
         if e["suite"] != "sampled_pairs": continue
