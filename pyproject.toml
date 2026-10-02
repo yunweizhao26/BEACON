@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools==81.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "beacon"
+version = "0.0.0"
+description = "Prior-guided regulatory pair prioritization from single-cell expression"
+requires-python = ">=3.10"
+dynamic = ["dependencies"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["beacon*", "experiments*", "evaluation*", "figures*", "preparation*", "data*", "tests*"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["dependencies.txt"]}

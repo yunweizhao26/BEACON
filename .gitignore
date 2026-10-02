@@ -1,12 +1,6 @@
 __pycache__/
-logs/
+*.pyc
+.ipynb_checkpoints/
 results/
-data/splits/
-data/raws/prev/
-master_results.csv
-.DS_Store
-._*
-.claude/
-.codex/
-papers/
-*.tex
+*.log
+slurm-*.out

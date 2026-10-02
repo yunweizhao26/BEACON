@@ -1,0 +1,3 @@
+data_root = "../beacon_data"
+bundle_url = ""
+bundle_sha256 = ""

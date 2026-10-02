@@ -1,0 +1,20 @@
+{
+  "rpe1_sources": {
+    "raw": {
+      "name": "raw.h5ad",
+      "id": 35775606,
+      "size": 8700873216,
+      "md5": "6a2a9d0d2bf4ec147f4d1104043b268c"
+    },
+    "bulk": {
+      "name": "bulk.h5ad",
+      "id": 35775512,
+      "size": 95350546,
+      "md5": "6f1e7d6a09e2f869759e3c4526b7f171"
+    }
+  },
+  "probability_grid": {
+    "R": "4.5.3",
+    "kSamples": "1.2.12"
+  }
+}
