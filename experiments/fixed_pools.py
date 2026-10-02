@@ -17,8 +17,7 @@ def seed_optimization(seed, *, cuda_all=False):
         torch.cuda.manual_seed_all(seed)
 
 def fit_features(features, train, *, seed=42, ratio=5, snn_weight=0.0,
-                 without_encoder=False, inducing_points=500, device="cuda",
-                 requested_encoder_epochs=50, requested_gp_epochs=50):
+                 without_encoder=False, inducing_points=500, device="cuda"):
     if inducing_points < 1 or int(inducing_points) != inducing_points:
         raise ValueError("inducing_points must be a positive integer")
     device = torch.device(device)
@@ -27,12 +26,12 @@ def fit_features(features, train, *, seed=42, ratio=5, snn_weight=0.0,
         projected = features
     else:
         encoder = training.fit_encoder(features, train, features.shape[1], 16,
-                                       requested_encoder_epochs, 32, .001, ratio, 1., device)
+                                       32, .001, ratio, 1., device)
         encoder.eval()
         with torch.no_grad():
             projected = encoder.get_embeddings(torch.tensor(features, dtype=torch.float32, device=device), combine_mode="avg").cpu().numpy()
     model, likelihood, _, _ = training.fit_gp(projected, train, device,
-        inducing_points_num=inducing_points, num_epochs=requested_gp_epochs, batch_size=1024, run_seed=seed)
+        inducing_points_num=inducing_points, batch_size=1024, run_seed=seed)
     model.eval()
     likelihood.eval()
     return training, projected, model, likelihood

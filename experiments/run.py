@@ -41,11 +41,6 @@ def execute(bundle, experiment, *, device="cuda", components=64, pca=False, scgp
         if split["train"].shape != truth.shape or np.any(truth[split["test"] == 1] != 1):
             raise ValueError("Sampled split and reference network disagree")
         return sampled_pairs.fit(expression, split, seed=condition["seed"], **common)
-    if suite == "all_settings":
-        split = bundle.arrays(experiment["split"])
-        if not np.array_equal(genes, split["genes"]):
-            raise ValueError("All-setting split axes differ")
-        return sampled_pairs.fit(expression, split, seed=condition["seed"], all_settings=True, **common)
     split = fixed_pools.make_split(truth, tfs, condition["split_seed"], condition["coverage"], condition["ratio"], condition["corruption"])
     frozen = bundle.arrays(reference["split"])
     for key in ("train", "valid", "test", "eligible_edges"):

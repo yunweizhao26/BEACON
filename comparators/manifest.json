@@ -247,7 +247,7 @@
     "gnn_lr_scheduler_type": "constant",
     "expected_valid_acc": 0.6,
     "dataset": "tf_500_mHSC-E",
-    "gnn_type": "GCN",
+    "gnn_type": "graph convolution network",
     "llm_type": "Geneformer",
     "cell_type": "mHSC-E",
     "num_TF": "500",

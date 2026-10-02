@@ -1,4 +1,4 @@
-"""Eighteen L40S prediction cases, plus a separate inducing metric check."""
+"""Sixteen L40S prediction cases, plus a separate inducing metric check."""
 from pathlib import Path
 import argparse
 import json
@@ -29,7 +29,7 @@ def scientific_log(log):
     fields = {"fallback", "validation_pairs", "validation_positives", "labeled_pairs", "labeled_positives",
               "e_star", "training_pairs", "best_epoch", "stop_epoch", "early_stopping", "validation_checks",
               "step1_selection", "best_validation_ap", "max_epochs", "step1_training_pairs", "epochs",
-              "stage", "mode", "requested_epochs", "selection_embeddings"}
+              "stage", "mode", "selection_embeddings"}
     if isinstance(log, list):
         return [scientific_log(value) for value in log]
     if isinstance(log, dict):
@@ -39,13 +39,14 @@ def scientific_log(log):
 
 
 def unit():
-    from beacon.model import Training
+    from beacon.model import Training, ENCODER_EPOCHS, GP_MAX_EPOCHS, GP_FALLBACK_EPOCHS
     from beacon.features import feature_control
     from beacon.pairs import make_split
-    from experiments.expression import transform
+    from experiments.expression import transform, control_expression
     from experiments.fixed_pools import fit
     import inspect
     import torch
+    assert (ENCODER_EPOCHS, GP_MAX_EPOCHS, GP_FALLBACK_EPOCHS) == (100, 200, 25)
     x = np.full((40, 40), -1, dtype=np.int8)
     x.flat[:99] = 1
     x.flat[99:900] = 0
@@ -54,6 +55,9 @@ def unit():
     x.flat[90:99] = 0
     assert Training().internal_split(x)["info"]["fallback"]
     features = np.arange(80, dtype=np.float64).reshape(20, 4)
+    assert transform(features, "random") is features
+    assert np.array_equal(control_expression(features, "random")[0],
+                          np.random.default_rng(2718).choice(features.ravel(), size=features.shape, replace=True))
     assert np.array_equal(feature_control(features, random_features=True), np.random.default_rng(2718).normal(size=features.shape).astype(np.float32))
     assert np.array_equal(feature_control(features, permuted_features=True), features[np.random.default_rng(2718).permutation(20)])
     for name in ("snn_weight", "random_features", "permuted_features", "without_encoder", "components", "pca", "inducing_points", "diagnostics", "decoder", "logistic", "nnpu"):
@@ -66,7 +70,7 @@ def unit():
     truth[np.repeat(np.arange(5), 8), np.tile(np.arange(10, 18), 5)] = 1
     a, b = make_split(truth, np.arange(5), 42, .05, 5), make_split(truth, np.arange(5), 42, .8, 5)
     assert np.array_equal(a["test"], b["test"]) and np.array_equal(a["valid"], b["valid"])
-    for control in ("gene_permuted", "cell_shuffled", "random_expression"):
+    for control in ("gene_permuted", "cell_shuffled", "random"):
         assert transform(np.asfortranarray(features), control).flags.f_contiguous
     assert not compare_arrays(np.array([0.]), np.array([-0.]))["exact"]
     print("Synthetic branch and bit-comparison checks passed")
@@ -104,8 +108,8 @@ def main():
     release_hash = hashlib.sha256((RELEASE / "manifest.json").read_bytes()).hexdigest()
     args.out.mkdir(parents=True, exist_ok=False)
     cases = [e for e in bundle.manifest["experiments"] if e["identity"]]
-    if len(cases) != 18:
-        raise ValueError("Expected exactly 18 authorized identity cases")
+    if len(cases) != 16:
+        raise ValueError("Expected exactly 16 authorized identity cases")
     records = []
     for experiment in cases:
         record = {"case": experiment["setting"], "suite": experiment["suite"], "condition": experiment["condition"]}
@@ -162,7 +166,7 @@ def main():
     status = "exact_minimal_gate" if all(r["status"] == "exact" for r in records) and metric_check["status"] == "metric_only" else "failed"
     (args.out / "manifest.json").write_text(json.dumps({"status": status, "gpu": torch.cuda.get_device_name(), "environment": environment,
         "release_manifest_sha256": release_hash, "bundle_manifest_sha256": bundle.manifest_sha256, "cases": records,
-        "inducing": metric_check, "scope": "18 settings only; no full-corpus identity claim"}, indent=2) + "\n")
+        "inducing": metric_check, "scope": "16 settings only; no full-corpus identity claim"}, indent=2) + "\n")
     if status == "failed":
         raise SystemExit("Identity failed; see maximum differences and errors in manifest.json")
 

@@ -1,9 +1,7 @@
 """Rescore saved predictions and evaluate the manuscript's numeric queries."""
 from pathlib import Path
 import argparse
-import itertools
 import json
-import re
 import numpy as np
 import pandas as pd
 from beacon.data import Bundle, RELEASE
@@ -29,7 +27,7 @@ def aligned_scores(data, edges, labels, method):
     return {k.removeprefix(prefix): data[k] for k in keys}
 
 def replay(bundle):
-    pools, completion, optimization, sergio, expression, probability, selective, resources, concordance, all_settings = ([] for _ in range(10))
+    pools, completion, optimization, sergio, expression, probability, selective, resources, concordance = ([] for _ in range(9))
     primary_scores = {}
     for experiment in bundle.manifest["experiments"]:
         suite, c, reference = experiment["suite"], experiment["condition"], experiment["reference"]
@@ -60,7 +58,7 @@ def replay(bundle):
             dataset = next(d for d in bundle.manifest["datasets"] if d["dataset"] == c["dataset"])
             train = bundle.array(dataset["sampled"]["train"])
         else:
-            split = bundle.arrays(experiment["split"] if suite == "all_settings" else reference["split"])
+            split = bundle.arrays(reference["split"])
             train = split["train"]
             if not np.array_equal(split["test"][tuple(edges.T)], labels):
                 raise ValueError("Prediction labels and frozen split differ")
@@ -82,8 +80,6 @@ def replay(bundle):
                     hidden_fraction_of_unlabeled=metadata["hidden_reference_positives_sampled_as_unlabeled"] / metadata["train_unlabeled"]))
             if suite == "expression" and method in ("beacon", "graph_only", "decoder"):
                 expression.append(dict(row, readout="beacon_decoder" if method == "decoder" else "beacon_gp", opt_seed=c["seed"]))
-            if suite == "all_settings" and method in ("gp", "decoder"):
-                all_settings.append(dict(row, dataset=c["dataset"], score="BEACON" if method == "gp" else "BEACON decoder"))
         if suite == "fixed_pools" and c["coverage"] == .8 and c["ratio"] == 5 and not c["corruption"]:
             key = (c["dataset"], c["split_seed"])
             stash = primary_scores.setdefault(key, {"edges": edges, "labels": labels, "scores": {}, "train": train})
@@ -121,13 +117,6 @@ def replay(bundle):
                     target["scores"][method] = scores
                     comparator_rows.append(dict(dataset=dataset, context=CONTEXT[dataset], split_seed=selected_seed, method=method,
                         **pool_metrics(target["labels"], scores, target["edges"])))
-        elif comparator["suite"] == "all_settings" and "dataset" in comparator:
-            data = bundle.arrays(comparator["artifacts"]["predictions"])
-            names = {"gnnlink_fa":"GNNLink FA64", "gnnlink_raw":"GNNLink raw", "degree":"Topology control", "beacon_gcn":"BEACON-GCN"}
-            for key in score_keys(data):
-                all_settings.append(dict(dataset=comparator["dataset"], split_seed=comparator["split_seed"],
-                    score=names[comparator["method"]] + (" decoder" if key == "decoder" else ""),
-                    **pool_metrics(data["labels"], data[key], data["edges"])))
     for (dataset, seed), record in sorted(primary_scores.items()):
         item = next(d for d in bundle.manifest["datasets"] if d["dataset"] == dataset)
         # This evaluator intentionally uses pandas' float64 conversion, not the fit loader's float32.
@@ -153,7 +142,7 @@ def replay(bundle):
         "completion_summary/hard_challenge_metrics.csv":pd.DataFrame(concordance),
         "probability_summary/probability_metrics.csv":pd.DataFrame(probability), "probability_summary/selective_metrics.csv":pd.DataFrame(selective),
         "summary/inducing_points.csv":pd.DataFrame(inducing), "expression":pd.DataFrame(expression), "pool_metrics":pd.DataFrame(pools),
-        "comparators":pd.DataFrame(comparator_rows).drop_duplicates(), "all_settings":pd.DataFrame(all_settings)}
+        "comparators":pd.DataFrame(comparator_rows).drop_duplicates()}
     tables["coverage_comparators"] = bundle.frame(bundle.manifest["tables"]["coverage_comparators"]).query('method == "gnnlink"')
     return tables
 
@@ -221,7 +210,6 @@ def main():
         getattr(queries,name)()
     comparator_queries(tables)
     sampled_queries(bundle,tables)
-    all_setting_queries(bundle,tables)
     pd.DataFrame(queries.rows).to_csv(args.out/"key_numbers.csv",index=False)
     for key,frame in tables.items():
         name=Path(key).stem
@@ -234,23 +222,6 @@ def main():
         evaluate(bundle,args.out/"responses")
         from evaluation.trrust import evaluate as trrust
         trrust(bundle,args.out/"trrust")
-
-def all_setting_queries(bundle,tables):
-    from evaluation.setting_comparisons import paired
-    registry=bundle.frame(bundle.manifest["tables"]["all_settings_registry"])
-    runs=tables["all_settings"].merge(registry[["dataset","reference","panel","excluded"]],on="dataset")
-    runs=runs[~runs.excluded]
-    complete=runs.groupby(["dataset","score"]).split_seed.nunique().rename("splits").reset_index()
-    means=runs.groupby(["dataset","reference","panel","score"])[["auprc_trapezoid","all_tf_ap","auroc"]].mean().reset_index().merge(complete,on=["dataset","score"])
-    means=means[means.splits==3]
-    comparisons=[("BEACON","GNNLink FA64"),("BEACON","GNNLink raw"),("BEACON","BEACON-GCN"),("BEACON","Topology control")]
-    for grouping,groups in [("all",[("all",means)]),("reference",list(means.groupby("reference"))),("panel",list(means.groupby("panel")))]:
-        for level,part in groups:
-            for metric in ("auprc_trapezoid","all_tf_ap"):
-                for left,right in comparisons:
-                    result=paired(part,left,right,metric)
-                    for column in ("mean_difference","left_wins","right_wins","ci_low","ci_high","wilcoxon_p"):
-                        queries.add("All-BEELINE matched-input comparison",f"{left} vs {right}: {column}",f"{grouping}: {level}",metric,None,result[column])
 
 if __name__=="__main__":
     main()

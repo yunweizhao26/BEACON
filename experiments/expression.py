@@ -11,7 +11,7 @@ def control_expression(x, control):
     if control == "cell_shuffled":
         order = rng.random(x.shape).argsort(axis=1)
         return np.take_along_axis(x, order, axis=1), None
-    if control in ("random", "random_expression"):
+    if control == "random":
         return rng.choice(x.ravel(), size=x.shape, replace=True).astype(x.dtype), None
     raise ValueError(control)
 

@@ -117,21 +117,21 @@ def stability():
     a, b = both('summary/optimization_seeds.csv')
     ta, tb = (f.groupby(['seed', 'context']).auprc_trapezoid.mean() for f in (a, b))
     for key in ta.index:
-        add('Optimization seeds (Table S16)', f'seed {key[0]}', key[1], 'auprc_trapezoid', ta[key], tb.get(key))
+        add('Optimization seeds', f'seed {key[0]}', key[1], 'auprc_trapezoid', ta[key], tb.get(key))
     for seed in [14, 42, 100]:
         for metric in ['auprc_trapezoid', 'all_tf_ap']:
-            add('Optimization seeds (Table S16)', f'seed {seed}', 'mean of 4', metric,
+            add('Optimization seeds', f'seed {seed}', 'mean of 4', metric,
                 a.query('seed == @seed')[metric].mean(), b.query('seed == @seed')[metric].mean())
     ra = a.groupby(['context', 'split_seed']).auprc_trapezoid.agg(lambda x: x.max() - x.min()).groupby('context').max()
     rb = b.groupby(['context', 'split_seed']).auprc_trapezoid.agg(lambda x: x.max() - x.min()).groupby('context').max()
     for context in ORDER:
-        add('Optimization seeds (Table S16)', 'largest seed range (per split)', context, 'auprc_trapezoid', ra[context], rb[context])
+        add('Optimization seeds', 'largest seed range (per split)', context, 'auprc_trapezoid', ra[context], rb[context])
     a, b = both('summary/inducing_points.csv')
     if b is not None and len(b):
         for metric in ['test_auprc_trapezoid', 'test_average_precision', 'validation_average_precision', 'training_seconds', 'peak_cuda_allocated_mb']:
             ta, tb = a.groupby('inducing_points')[metric].mean(), b.groupby('inducing_points')[metric].mean()
             for m in ta.index:
-                add('Inducing points (Table S15)', f'M = {m}', 'mean of 12', metric, ta[m], tb.get(m))
+                add('Inducing points', f'M = {m}', 'mean of 12', metric, ta[m], tb.get(m))
 
 def expression_controls():
     a, b = both("expression")
@@ -148,21 +148,21 @@ def expression_controls():
                 wide = f.pivot_table(index=['context', 'split_seed'], columns='control', values='auprc_trapezoid')
                 counts.append(int((wide.real > wide[['cell_shuffled', 'gene_permuted', 'random']].max(axis=1)).sum()))
                 tables.append(f.pivot_table(index='context', columns='control', values='auprc_trapezoid'))
-            add('Expression controls (Table S17)', f'{readout}: real beats all three controls (of 12)', f'coverage {cov:g}', 'auprc_trapezoid', *counts)
+            add('Expression controls', f'{readout}: real beats all three controls (of 12)', f'coverage {cov:g}', 'auprc_trapezoid', *counts)
             ta, tb = tables
-            for control in ['cell_shuffled', 'gene_permuted', 'random', 'random_expression']:
+            for control in ['cell_shuffled', 'gene_permuted', 'random']:
                 for context in ORDER:
-                    add('Expression controls (Table S17)', f'{readout}: real - {control}', f'{context}, coverage {cov:g}', 'auprc_trapezoid',
+                    add('Expression controls', f'{readout}: real - {control}', f'{context}, coverage {cov:g}', 'auprc_trapezoid',
                         ta.loc[context, 'real'] - ta.loc[context, control], tb.loc[context, 'real'] - tb.loc[context, control])
             for context in ORDER:
-                add('Expression controls (Table S17)', f'{readout}: real', f'{context}, coverage {cov:g}', 'auprc_trapezoid',
+                add('Expression controls', f'{readout}: real', f'{context}, coverage {cov:g}', 'auprc_trapezoid',
                     ta.loc[context, 'real'], tb.loc[context, 'real'])
         noise = []
         for frame in (a, b):
             f = pick(frame, readout, .8, seed42=False)
             f = f[f.control == 'real']
             noise.append(f.groupby(['context', 'split_seed']).auprc_trapezoid.agg(lambda x: x.max() - x.min()).mean())
-        add('Expression controls (Table S17)', f'{readout}: mean optimization range (seeds 14/42/100)', 'coverage 0.8', 'auprc_trapezoid', *noise)
+        add('Expression controls', f'{readout}: mean optimization range (seeds 14/42/100)', 'coverage 0.8', 'auprc_trapezoid', *noise)
 
 def resources():
     a, b = both('summary/resources.csv')

@@ -52,8 +52,8 @@ def main():
     keys = ["section", "item", "context", "metric"]
     for frame in (expected, actual):
         frame[keys] = frame[keys].fillna("")
-    if list(expected.columns) != [*keys, "value"] or len(expected) != 1528:
-        raise ValueError("Expected 1,528 published key numbers with one value column")
+    if list(expected.columns) != [*keys, "value"] or len(expected) != 1176:
+        raise ValueError("Expected 1,176 published key numbers with one value column")
     expected = expected.set_index(keys)
     actual = actual.set_index(keys)
     if not expected.index.is_unique or not actual.index.is_unique:

@@ -26,7 +26,7 @@ def fit(bundle, data, *, components=64, pca=False, features=None, inducing_point
         features = cached if components == 64 and not pca else expression_features(
             np.asarray(data["expression"], dtype=np.float32), components=components, pca=pca)
     training, projected, model, likelihood = fit_features(features, data["train"], device=device,
-        inducing_points=inducing_points, requested_encoder_epochs=100, requested_gp_epochs=200)
+        inducing_points=inducing_points)
     n, tfs = len(data["genes"]), data["tf_indices"]
     scores = np.empty((len(tfs), n), dtype=np.float32)
     for row, source in enumerate(tfs):

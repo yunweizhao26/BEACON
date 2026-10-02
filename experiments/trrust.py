@@ -30,7 +30,7 @@ def fit(bundle, task_index, *, components=64, pca=False, features=None, inducing
         raise ValueError("Evaluated reciprocal TRRUST edge occurs in prior")
     features = expression_features(expression, components=components, pca=pca) if features is None else features
     training, projected, model, likelihood = fit_features(features, train, seed=task["seed"],
-        inducing_points=inducing_points, device=device, requested_encoder_epochs=100, requested_gp_epochs=200)
+        inducing_points=inducing_points, device=device)
     # The frozen task scores the complete evaluation list in one batch, concatenating on the device.
     with torch.no_grad(), gpytorch.settings.fast_pred_var(), gpytorch.settings.cholesky_jitter(.1):
         sources = torch.tensor(projected[edges[:, 0]], dtype=torch.float32, device=device)

@@ -131,9 +131,9 @@ class Training:
             model.eval()
             return (model, np.concatenate([positives, unlabeled]))
 
-        def train_encoder(embeddings, adjacency_matrix, input_dim, projection_dim, num_epochs, batch_size, learning_rate, negative_ratio, temperature, device):
+        def train_encoder(embeddings, adjacency_matrix, input_dim, projection_dim, batch_size, learning_rate, negative_ratio, temperature, device):
             args = (input_dim, projection_dim, batch_size, learning_rate, negative_ratio, temperature, device)
-            record = {'epochs': ENCODER_EPOCHS, 'requested_epochs': int(num_epochs), 'mode': 'refit'}
+            record = {'epochs': ENCODER_EPOCHS, 'mode': 'refit'}
             seed = torch.initial_seed()
             split = internal_split(adjacency_matrix)
             if split['info']['fallback']:
@@ -247,7 +247,7 @@ class Training:
             record = {'early_stopping': early, 'stop_epoch': int(stop), 'best_epoch': int(best_epoch if early else stop), 'best_validation_ap': float(best_ap) if early else None, 'validation_checks': checks, 'max_epochs': int(max_epochs), 'training_pairs': int(len(labels))}
             return (model, likelihood, x_train, y_train, record)
 
-        def train_gp(projected_embeddings, adjacency_matrix, device, inducing_points_num=500, num_epochs=50, batch_size=1024, run_seed=42):
+        def train_gp(projected_embeddings, adjacency_matrix, device, inducing_points_num=500, batch_size=1024, run_seed=42):
             started = time.perf_counter()
             common = {'inducing_points_num': inducing_points_num, 'batch_size': batch_size}
             split = internal_split(adjacency_matrix)
@@ -264,7 +264,7 @@ class Training:
                 assert len(y_train) == int((adjacency_matrix >= 0).sum()), 'refit GP must use every labeled training pair'
                 record.update(stage='refit', e_star=int(split['e_star']), step1_selection=selection)
             record.update(split['info'])
-            record.update(mode='refit', requested_epochs=int(num_epochs), seconds=time.perf_counter() - started)
+            record.update(mode='refit', seconds=time.perf_counter() - started)
             self.training_log['fits'].append(record)
             print(f"BEACON GP ({'refit'}, {record['stage']}): stop epoch {record['stop_epoch']}, best epoch {record['best_epoch']}, validation AP {record['best_validation_ap']}, e* {record.get('e_star')}", flush=True)
             return (model, likelihood, x_train, y_train)

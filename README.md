@@ -20,7 +20,7 @@ export OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2
 python -m experiments.fixed_pools --dataset 1501 --out results/quickstart
 ```
 
-Output directories must be absent. Experiment settings are listed in the data bundle’s `manifest.json`; `--case` selects a setting. Runners cover fixed pools, sampled pairs, expression controls, SERGIO, K562, T cells, RPE1, TRRUST and sensitivity analyses.
+Output directories must be absent. Experiment settings are listed in the data bundle’s `manifest.json`; `--case` selects a setting. Runners cover fixed pools, sampled pairs, expression controls, SERGIO, K562, T cells, RPE1, influenza-stimulated TRRUST and sensitivity analyses.
 
 ## Data
 
@@ -30,7 +30,7 @@ Set `data_root`, `bundle_url` and `bundle_sha256` in [config.toml](config.toml),
 python -m data.download
 ```
 
-The publication URL and checksum are pending. The bundle is a [plain directory tree](data/README.md) of NPZ, CSV, TSV and JSON files with one top-level manifest. Arrays preserve dtype, values and memory order. See [public sources](data/sources.md), [raw preparation](preparation/README.md) and [comparator configurations](comparators/README.md).
+The data bundle is archived at Zenodo, [doi:10.5281/zenodo.23108369](https://doi.org/10.5281/zenodo.23108369), and `config.toml` already holds its URL and SHA-256. The bundle is a [plain directory tree](data/README.md) of NPZ, CSV, TSV and JSON files with one top-level manifest. Arrays preserve dtype, values and memory order. See [public sources](data/sources.md), [raw preparation](preparation/README.md) and [comparator configurations](comparators/README.md).
 
 ## Tables and figures
 
@@ -101,7 +101,7 @@ python -m tests.test_equivalence --out results/equivalence
 python -m tests.test_evaluation --out results/evaluation_test
 ```
 
-The identity test checks 18 prediction cases bitwise and inducing metrics separately. The evaluation test checks 1,528 in-scope key numbers at absolute tolerance 1e-9. Full numerical validation remains pending. Optional [Slurm wrappers](tests/equivalence.sbatch) accept a configurable Python and require your account and partition.
+The identity test checks 16 prediction cases bitwise and inducing metrics separately. The evaluation test checks 1,176 in-scope key numbers at absolute tolerance 1e-9. Both tests pass on NVIDIA L40S GPUs with the pinned environment. Optional [Slurm wrappers](tests/equivalence.sbatch) accept a configurable Python and require your account and partition.
 
 ## License
 

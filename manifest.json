@@ -10,7 +10,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "c37158a6fc995109306ba1126053d83d15350b786c813479d760f4cc547b9dfd"
+      "sha256": "bd6b46ab067323ea02ea8a675bf7a173ab10778737217ee923fa5a1e806fc844"
     },
     {
       "path": "beacon/__init__.py",
@@ -26,7 +26,7 @@
     },
     {
       "path": "beacon/model.py",
-      "sha256": "b7d77550e192829f7b3719ee4065333a4b74fa87e9d52db826347f360324af53"
+      "sha256": "168c96faad4cfddba4007185273dcf7f310cdc2f04f1a41cc89a6ca5bdf1f33c"
     },
     {
       "path": "beacon/pairs.py",
@@ -34,11 +34,11 @@
     },
     {
       "path": "comparators/README.md",
-      "sha256": "0e1fd645d98179a91dc0753abd698f6bdf95e16ac5a25e7692f367dfa61ff11d"
+      "sha256": "a23af19141018e5e3686387f2991c1b99a1e893c77fd40186573e60835dbbe27"
     },
     {
       "path": "comparators/manifest.json",
-      "sha256": "5640580d4ef0849a49bb659a7c94b8d8240325e9a9fd340cbe294ba04324d79b"
+      "sha256": "a1845c907a6062af5ee762f6561487205e10375d7386a06001816b5102381a67"
     },
     {
       "path": "comparators/monitor.py",
@@ -46,11 +46,11 @@
     },
     {
       "path": "config.toml",
-      "sha256": "2718b57b0dc9b638091b3a6c38fc20e9df83bd06cfc5f35f9c78133d716e9228"
+      "sha256": "d74b8d04e98ccfb026f950a03dbf544e57d77d9d5f7f27f8a1175f73017f36e0"
     },
     {
       "path": "data/README.md",
-      "sha256": "f1cadec7af4548d12505c967c9e397d2a27ae7e223d86ee0203d2ffbfc904a8c"
+      "sha256": "e7e0e741d1c0e96abe05a459c4bca2bc3d52061965f57b7a310714f3e6ecc8a3"
     },
     {
       "path": "data/__init__.py",
@@ -86,19 +86,15 @@
     },
     {
       "path": "evaluation/queries.py",
-      "sha256": "95a18f60754af9721513d386a75d5d85eaf467c4071912b82f65a0b4398840f4"
+      "sha256": "b0d7f51f8eef5b13d8c5c46de667f122026d08299ea4ae1ab2916e4e6942c833"
     },
     {
       "path": "evaluation/report.py",
-      "sha256": "1020805e031bfd0ca98aaf698fa3692a6b95463d9344546560284b7634ff0371"
+      "sha256": "f85fc60d061897fadc42513de6958f8cefd2cd47876e25ff32272be9ac471418"
     },
     {
       "path": "evaluation/responses.py",
       "sha256": "e5846776a5af5b15b2c94b5d8d0b80e8c16b30e37901e6a91edbc6e7051696f0"
-    },
-    {
-      "path": "evaluation/setting_comparisons.py",
-      "sha256": "5c095ede1d26b841ae3a86af131c4d953031e222042c53788d88d2c01303ead3"
     },
     {
       "path": "evaluation/trrust.py",
@@ -110,7 +106,7 @@
     },
     {
       "path": "experiments/expression.py",
-      "sha256": "b6d11c77dd5e99615a817f997526dc252937400697e68b32b6206c018320b4b2"
+      "sha256": "62c771786a5f4bddcd06580d39d62552760560663b326d1937a272c7fe6ea103"
     },
     {
       "path": "experiments/external.py",
@@ -118,7 +114,7 @@
     },
     {
       "path": "experiments/fixed_pools.py",
-      "sha256": "98471fcc0b50175a430d015331ce6267c92d5ffda356433c0c2f67b81ae37032"
+      "sha256": "09012b4e48d5e651b0798ca7037d06f99e6b9392d64a3dfe5218fe4dbebfe2ec"
     },
     {
       "path": "experiments/k562.py",
@@ -126,11 +122,11 @@
     },
     {
       "path": "experiments/rpe1.py",
-      "sha256": "26f07c3f888263633d5c67d7f5dc388b9392d6fde27a970fe37109d4863879ec"
+      "sha256": "7b8cd4a9aef46d3ecd97987b4fb826bddb852ea331d230a12ae1f49b258e68fc"
     },
     {
       "path": "experiments/run.py",
-      "sha256": "0569e009d60fd764a4c2bcdc93e449b5d6bf3408dd5916b58df9d16895cc419a"
+      "sha256": "e9bde3d04467600785324cca8e4253fc1beb58851104d1862cb2e0dd4143cdab"
     },
     {
       "path": "experiments/run.sbatch",
@@ -138,11 +134,11 @@
     },
     {
       "path": "experiments/sampled_pairs.py",
-      "sha256": "f14bf114d99bc478a6260580ac095b8bce24ced5495ea0318c37480cb02bb411"
+      "sha256": "e4d6716bf8e12babe400cff323488171bfcbdfc67ef8133958811fbfe30ddaa2"
     },
     {
       "path": "experiments/sensitivity.py",
-      "sha256": "55ab886b6cc54401d603adba52ae8eacabb95c8bafa6aefcbbe7aed89bff8628"
+      "sha256": "e650b54bd404c7bc67afaa215b69481f4b63b8c564d170f7e56865a623b07af6"
     },
     {
       "path": "experiments/sergio.py",
@@ -154,7 +150,7 @@
     },
     {
       "path": "experiments/trrust.py",
-      "sha256": "fd41f6db4c6d322a1f6bff7c4aed2377fc6eec3bd983fc5c89ba5e54c7945940"
+      "sha256": "488b98b91eeec11dc742871608fa5dace8ab872b0a1b770f08e181c9c00e66ca"
     },
     {
       "path": "figures/__init__.py",
@@ -278,11 +274,11 @@
     },
     {
       "path": "tests/test_equivalence.py",
-      "sha256": "399ea9525257fee6fd63679c4f1bc8c93352c67b7c4a7b3f22efb3a8f21398d6"
+      "sha256": "83ac85f9495827b21b03d6448f2b52f471c0a3e01010b4647ee7dff4d0d91c1c"
     },
     {
       "path": "tests/test_evaluation.py",
-      "sha256": "6fd6b67ac90c0df7c4033ceadd9d27f84a4e6f9dd91c823e76bbcde036487b85"
+      "sha256": "4ea4b36643a52cc2d54354a40ed0553aa7f4eee298c636c4b1a39e7f6e0ec009"
     }
   ]
 }

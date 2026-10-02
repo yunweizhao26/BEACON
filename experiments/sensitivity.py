@@ -21,7 +21,7 @@ def inducing(bundle, experiment, *, device="cuda"):
     fits = {}
     for count in (128, 256, 500, 1000):
         model, likelihood, _, _ = training.fit_gp(embeddings, split["train"], torch.device(device),
-            inducing_points_num=count, num_epochs=50, batch_size=1024, run_seed=42)
+            inducing_points_num=count, batch_size=1024, run_seed=42)
         model.eval()
         likelihood.eval()
         fit = {"gp_epochs": int(training.training_log["fits"][-1]["stop_epoch"]), "gp_stage": training.training_log["fits"][-1]["stage"]}
