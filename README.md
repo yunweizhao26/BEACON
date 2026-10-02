@@ -102,3 +102,7 @@ python -m tests.test_evaluation --out results/evaluation_test
 ```
 
 The identity test checks 18 prediction cases bitwise and inducing metrics separately. The evaluation test checks 1,528 in-scope key numbers at absolute tolerance 1e-9. Full numerical validation remains pending. Optional [Slurm wrappers](tests/equivalence.sbatch) accept a configurable Python and require your account and partition.
+
+## License
+
+MIT. See [LICENSE](LICENSE).

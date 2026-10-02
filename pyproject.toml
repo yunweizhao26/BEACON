@@ -7,6 +7,8 @@ name = "beacon"
 version = "0.0.0"
 description = "Prior-guided regulatory pair prioritization from single-cell expression"
 requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
 dynamic = ["dependencies"]
 
 [tool.setuptools.packages.find]

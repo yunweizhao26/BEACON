@@ -5,8 +5,12 @@
       "sha256": "56616f892cb8713a33bf9042ff47af90a79eae6b4a316c59c155b342ed7b8749"
     },
     {
+      "path": "LICENSE",
+      "sha256": "7d2608ec5ef24a31ae69fd33f4afa5dddddc9472c56d1405dd2b8e21d563906b"
+    },
+    {
       "path": "README.md",
-      "sha256": "6c2ae551665f94abd683ed309a2f42f6c2c860b6edbc0cb596a25482af6cd631"
+      "sha256": "c37158a6fc995109306ba1126053d83d15350b786c813479d760f4cc547b9dfd"
     },
     {
       "path": "beacon/__init__.py",
@@ -254,7 +258,7 @@
     },
     {
       "path": "pyproject.toml",
-      "sha256": "2475dbfe34d67e093443aa329cb1f96693f5ef368af46ea690296e21a34fcc52"
+      "sha256": "896356a8d4fb05991d0b139629eb5a9fa8e0501f19fc6b2a5a9dd231052ed89b"
     },
     {
       "path": "requirements.txt",
