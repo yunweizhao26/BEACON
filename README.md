@@ -38,6 +38,7 @@ Recompute key numbers and response metrics from saved predictions:
 
 ```bash
 python -m evaluation.report --responses --out results/evaluation
+python -m evaluation.matched --out results/matched
 ```
 
 One command per main-text output:

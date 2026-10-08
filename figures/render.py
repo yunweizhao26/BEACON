@@ -30,14 +30,13 @@ def tcell_evaluations(build):
 STYLES = {POP[0]: ("#0072B2", "^", "-."), POP[1]: ("#CC79A7", "v", ":")}
 PUB = ["BEACON", "GNNLink", "RegGAIN", POP[0]]
 KS = [10, 25, 50, 100, 200]
-COMPONENTS = [('beacon', 'beacon', 'BEACON'), ('beacon', 'decoder', 'Pair decoder'),
-              ('beacon', 'learned_logistic', 'Logistic on learned\nrepresentations'),
-              ('beacon_snn', 'beacon', 'BEACON + SNN objective'),
-              ('graph_only', 'graph_only', 'Random node features'), ('permuted', 'permuted', 'Permuted features'),
-              ('fa_gp', 'fa_gp', 'GP without encoder'), *[('beacon', m, m) for m in POP]]
+COMPONENTS = [('beacon', 'beacon', 'BEACON (full model)'), ('fa_gp', 'fa_gp', 'w/o encoder'),
+              ('beacon', 'decoder', 'w/o GP (decoder scores)'), ('beacon', 'learned_logistic', 'w/o GP (logistic head)'),
+              ('graph_only', 'graph_only', 'w/o expression (random features)'),
+              ('permuted', 'permuted', 'w/o expression (genes permuted)'), *[('beacon', m, m) for m in POP]]
 RPE_NAMES = {"beacon_model": "BEACON", "gnnlink": "GNNLink", "reggain": "RegGAIN",
-             "inferelator_tfa_bbsr_5_bootstraps": "Inferelator", "degree_logistic": "Topology control",
-             "expression_abs_correlation": "Expression correlation", "target_control_detection": "Target detection", POP[0]: POP[0]}
+             "inferelator_tfa_bbsr_5_bootstraps": "Inferelator", "degree_logistic": "Topology control", POP[0]: POP[0],
+             "expression_abs_correlation": "Expression correlation", "target_control_detection": "Target detection"}
 TIED_AUPRC_NOTE = ("Tied constant scores inflate trapezoid AUPRC for prior controls "
                    "(up to 0.105 for target in-degree, DS1514); this area is not enrichment.")
 
@@ -124,131 +123,105 @@ def main_figures(build, completion):
     drawing.prior_completion(env['coverage'], env['primary'], env['save'])
 
     response, comparisons, binding, ra, ba = assays(build)
-    env.update(components=COMPONENTS, ablation=completion.query('coverage == .8 and ratio == 5 and corruption == 0'),
-               resp_controls=response, control_comparisons=comparisons)
+    env.update(components=COMPONENTS, ablation=completion.query('coverage == .8 and ratio == 5 and corruption == 0'))
     def save_components(fig, name):
-        prior = comparisons.loc[POP[0]]
-        for ax in fig.axes[2:]:
-            mean, low, high = prior.beacon_minus_comparator_macro_ap, prior.ci_low, prior.ci_high
-            ax.errorbar(mean, -.12, xerr=[[mean-low], [high-mean]], fmt="^", color=STYLES[POP[0]][0], ms=4, capsize=2)
-            # Fourth line under the n/clipped block, above the mean-difference marker.
-            ax.text(.03, .745, "Blue triangle: BEACON − prior target in-degree", transform=ax.transAxes,
-                    ha="left", va="top", fontsize=5.9, color=STYLES[POP[0]][0])
-            left, right = ax.get_xlim()
-            ax.set_xlim(min(left, low * 1.1), max(right, high * 1.1))
-        save(build, fig, name, "A: pooled trapezoid AUPRC; B: all-TF mean AP; C–D: response AP differences",
-             "Same two ablation heatmaps and two K562 control strips. Adds prior-only controls to heatmaps and "
-             "prior-target paired AP intervals to strips; SNN is an ablation, not the published objective.", True)
-    env["save"] = save_components
-    drawing.component_evidence(env['components'], env['ablation'], env['resp_controls'], env['control_comparisons'], env['save'])
+        save(build, fig, name, "A: pooled trapezoid AUPRC; B: all-TF mean AP; C: paired K562 response AP differences",
+             "Ablations of the final model with the two prior-only rankings; K562 expression controls with regulator-bootstrap intervals.")
+    drawing.component_evidence(env['components'], env['ablation'], comparisons, save_components)
 
-    pub, ks = PUB, KS
-    def curves(frame):
-        frame = frame.set_index("method")
-        return {m: {k: float(frame.loc[m, f"top{k}_response_fraction"]) for k in ks} for m in pub}
-    env.update(response_tf=response, binding_tf=binding, response_agg=ra, binding_agg=ba, pub=pub, ks=ks,
-               response_curves=curves(ra), binding_curves=curves(ba.query('assay == "binding"')))
-    env["fig"], env["axes"] = drawing.experimental_validation(env['response_agg'], env['response_tf'], env['binding_agg'], env['binding_tf'], env['response_curves'], env['binding_curves'], env['pub'], env['ks'])
-    fig, axes = env["fig"], env["axes"]
-    for ax, data, column in [(axes[0, 0], response, "average_precision_all_tf"),
-                             (axes[0, 1], binding.query('assay == "binding"'), "average_precision"),
-                             (axes[0, 2], binding.query('assay == "binding_and_response"'), "average_precision")]:
-        wide = data.pivot(index="tf", columns="method", values=column)
-        x, y = wide[POP[0]].to_numpy(), wide.BEACON.to_numpy()
-        if ax is axes[0, 0]:
-            x, y = np.sqrt(x), np.sqrt(y)
-        ax.scatter(x, y, s=9, marker="^", edgecolors=STYLES[POP[0]][0], facecolors="none", linewidths=.4, alpha=.5)
-        high = max(ax.get_xlim()[1], x.max() * 1.04, y.max() * 1.04)
-        ax.set(xlim=(0, high), ylim=(0, high), xlabel="Comparator AP")
-        ax.legend(handles=[Line2D([], [], marker="o", color="#333333", ls="", label="GNNLink"),
-                           Line2D([], [], marker="^", color=STYLES[POP[0]][0], ls="", label="Prior target in-degree")],
-                  fontsize=4.4, loc="lower right", frameon=False)
+    summary, controls = matched_results(build)
+    experimental_validation(build, ra, ba, summary, controls)
+    cross_context(build, summary, controls)
+
+NAMES = {"Degree logistic": "Topology control"}
+K562_METHODS = ["BEACON", "GNNLink", "RegGAIN", "Topology control", "Prior target in-degree", "Target expression"]
+
+
+def matched_results(build):
+    """Expression-matched top-K enrichment and the target-expression control, computed from bundle predictions."""
+    from evaluation.matched import CONTEXTS, enrichment, summarize
+    frames, controls = zip(*(enrichment(build.bundle, context) for context in CONTEXTS))
+    summary, _ = summarize(pd.concat(frames, ignore_index=True))
+    summary["method"] = summary.method.replace(NAMES)
+    controls = pd.concat(controls, ignore_index=True)
+    return summary, controls
+
+
+def ratio_series(summary, condition, k, methods):
+    part = summary[summary.condition.eq(condition) & summary.k.eq(k)].set_index("method")
+    return ({m: float(part.loc[m, "ratio"]) for m in methods},
+            {m: (float(part.loc[m, "ratio"] - part.loc[m, "ratio_ci_low"]), float(part.loc[m, "ratio_ci_high"] - part.loc[m, "ratio"])) for m in methods})
+
+
+def experimental_validation(build, ra, ba, summary, controls):
+    methods, ks = K562_METHODS, KS
+    k562 = summary[summary.condition.eq("k562")]
+    fractions = {m: [float(k562[k562.method.eq(m) & k562.k.eq(k)].observed.iloc[0]) for k in ks] for m in methods}
+    ratios = {m: [float(k562[k562.method.eq(m) & k562.k.eq(k)].ratio.iloc[0]) for k in ks] for m in methods}
+    errors = {m: np.array([[float(r.ratio - r.ratio_ci_low), float(r.ratio_ci_high - r.ratio)]
+                           for k in ks for r in [k562[k562.method.eq(m) & k562.k.eq(k)].iloc[0]]]).T for m in methods}
+    target = controls[controls.condition.eq("k562")]
+    relative = {}
+    for frame, assay in ((ra.assign(assay="response"), "response"), (ba, "binding"), (ba, "binding_and_response")):
+        part = frame[frame.assay.eq(assay)].assign(method=lambda f: f.method.replace(NAMES)).set_index("method")
+        control = target[target.assay.eq(assay)]
+        for m in methods:
+            value = control.average_precision.mean() / control.prevalence.mean() if m == "Target expression" else part.loc[m, "macro_ap_all_tf"] / part.loc[m, "macro_prevalence"]
+            relative.setdefault(m, []).append(float(value))
     counts, expected = dnmt1_counts(build)
-    ax = axes[1, 2]
-    columns = ["response", "bound", "both"]
-    width = .8 / len(pub)
-    highest = float(expected.max())
-    for j, method in enumerate(pub):
-        values = counts.loc[method, columns].to_numpy(float)
-        highest = max(highest, values.max())
-        bars = ax.bar(np.arange(3) + (j - (len(pub) - 1) / 2) * width, values, width * .93,
-                      color=env["METHOD_STYLE"][method][0], edgecolor="#222222", linewidth=.35)
-        ax.bar_label(bars, fontsize=5, padding=1)
-    for x, value in enumerate(expected):
-        ax.plot([x - .43, x + .43], [value, value], color="#222222", ls="--", lw=.8)
-    ax.set(xticks=range(3), xticklabels=["Response", "Binding", "Both"], ylim=(0, highest * 1.55), ylabel="Supported targets in top 100")
-    env["panel"](ax, "f", "DNMT1 top-100 assay support")
-    env["light_grid"](ax)
-    fig.legend(handles=[Line2D([], [], color=env["METHOD_STYLE"][m][0], marker=env["METHOD_STYLE"][m][1], label=m) for m in pub],
-               ncol=4, frameon=False, loc="lower center", bbox_to_anchor=(.5, -.07))
-    save(build, fig, "experimental_validation", "A–C: equal-regulator AP; D–E: fractional-tie top-K support; F: supported-target counts",
-         "Preserves six panels; adds prior target in-degree. Reads configured evaluation outputs only. "
-         "DNMT1 uses exactly 100 targets with stable ordering to resolve cutoff ties; dashed lines show population expectations. "
-         "Prior regulator out-degree cannot rank targets within a regulator and is omitted.", True)
-    cross_context(build, env)
+    counts = counts.rename(index=NAMES)
+    dnmt1 = {m: counts.loc[m, ["response", "bound", "both"]].astype(float).tolist() for m in methods if m != "Target expression"}
+    dnmt1["Target expression"] = target[target.assay.eq("dnmt1_top100")][["response", "bound", "both"]].iloc[0].astype(float).tolist()
+    chance = float(ra.set_index("method").loc["BEACON", "macro_prevalence"])
+    fig = drawing.k562_evaluation(fractions, ratios, errors, relative, dnmt1, expected, chance, ks, methods)
+    save(build, fig, "experimental_validation", "A: fractional-tie top-K response fraction; B: observed over expression-matched fraction; "
+         "C: mean AP over chance; D: supported-target counts",
+         "K562 response, promoter-binding and joint endpoints with the target-expression control and 95% regulator-bootstrap intervals in B.")
 
-def cross_context(build, env):
-    tcells = tcell_evaluations(build)["per_tf_metrics"]
-    trrust = build.csv("trrust_rankings")  # paired-monitor GRNBoost2
-    fig, axes = plt.subplots(2, 3, figsize=(8.2, 5.3), layout="constrained", gridspec_kw={"height_ratios": [1, 1.4]})
-    for ax, condition, letter in zip(axes[0, :2], ("resting", "stimulated"), ("a", "b")):
-        methods = ["BEACON", "GNNLink", POP[0]]
-        data = tcells[tcells.condition.eq(condition) & tcells.method.isin(methods)]
-        wide = data.pivot(index="tf", columns="method", values="average_precision").sort_values("BEACON")
+
+def cross_context(build, summary, controls):
+    per_tf = tcell_evaluations(build)["per_tf_metrics"].assign(method=lambda f: f.method.replace(NAMES))
+    shown = ["BEACON", "GNNLink", "Topology control", "Prior target in-degree", "Target expression"]
+    tcells = {}
+    for condition in ("resting", "stimulated"):
+        data = per_tf[per_tf.condition.eq(condition)]
+        wide = data.pivot(index="tf", columns="method", values="average_precision")
+        control = controls[controls.condition.eq("tcell_" + condition) & controls.assay.eq("response")].set_index("tf")
+        wide["Target expression"] = control.average_precision.reindex(wide.index)
+        if wide[shown].isna().any().any():
+            raise ValueError("Incomplete T-cell regulator cohort")
+        wide = wide.sort_values("BEACON", ascending=False)
+        prevalence = data[data.method.eq("BEACON")].set_index("tf").prevalence.reindex(wide.index)
         training = build.npz(("training", condition))
         names = dict(zip(training["genes"].astype(str), training["symbols"].astype(str)))
-        for i, row in enumerate(wide.to_numpy()):
-            ax.plot([row.min(), row.max()], [i, i], color="#BBBBBB", lw=.8)
-        for m in methods:
-            color, marker, _ = env["METHOD_STYLE"][m]
-            # Hollow comparator markers and BEACON on top keep tied values visible.
-            ax.scatter(wide[m], np.arange(len(wide)), facecolors=color if m == "BEACON" else "none",
-                       edgecolors=color, marker=marker, s=16, label=m, zorder=3 if m == "BEACON" else 2)
-        ax.set(yticks=range(len(wide)), yticklabels=[names.get(str(t), str(t)) for t in wide.index], xlabel="Per-regulator AP", xlim=(0, None))
-        env["panel"](ax, letter, "Primary " + ("resting" if condition == "resting" else "re-stimulated") + " T cells")
-        env["light_grid"](ax, "x")
-    methods = ["BEACON", "GNNLink", "GENELink", "GRNBoost2", "GENIE3", "Inferelator", POP[0]]
-    colors = {"BEACON": "#1B9E77", "GNNLink": "#D95F02", "GENELink": "#0072B2", "GRNBoost2": "#CC79A7",
-              "GENIE3": "#E69F00", "Inferelator": "#56B4E9", POP[0]: "#0072B2", "RegGAIN": "#7570B3",
-              "Topology control": "#555555", "Expression correlation": "#999999", "Target detection": "#222222"}
-    env.update(methods=methods, method_colors=colors)
-    for ax, metric, title in [(axes[0, 2], "auroc", "c TRRUST same-regulator AUROC"),
-                               (axes[1, 0], "average_precision", "d TRRUST regulator-weighted AP")]:
-        env["trrust_dumbbell"](ax, trrust.query('evaluation == "all"').set_index("method")[metric],
-                              trrust.query('evaluation == "overlap_removed"').set_index("method")[metric], title,
-                              "AUROC" if metric == "auroc" else "Average precision")
-    names = RPE_NAMES
-    wide, indices, report = rpe1_values(build)
-    rng = np.random.default_rng(7)
-    for paired, ax, letter in [(False, axes[1, 1], "e"), (True, axes[1, 2], "f")]:
-        keys = list(names)[1:] if paired else list(names)
-        for y, key in zip(np.arange(len(keys))[::-1], keys):
-            values = (wide.beacon_model - wide[key] if paired else wide[key]).to_numpy()
-            mean = values.mean()
-            low, high = np.quantile(values[indices].mean(axis=1), [.025, .975])
-            if paired:
-                target = report["beacon_minus"][key]["top100_mean_abs_effect"]
-                if not np.allclose([mean, low, high], [target["mean"], *target["ci95"]]):
-                    raise ValueError("RPE1 bootstrap differs from saved evaluation")
-                ax.scatter(values, y + rng.uniform(-.13, .13, len(values)), s=7, facecolors="none", edgecolors="#777777", linewidths=.4)
-            ax.errorbar(mean, y, xerr=[[mean - low], [high - mean]], fmt="o", ms=4, capsize=2, color=colors.get(names[key], "#555555"))
-        ax.set(yticks=np.arange(len(keys))[::-1], yticklabels=[names[k].replace(" ", "\n", 1) if len(names[k]) > 17 else names[k] for k in keys],
-               xlabel="BEACON − comparator (control SD)" if paired else "Mean top-100 response (control SD)")
-        if paired:
-            ax.axvline(0, color="#777777", ls="--", lw=.75)
-        else:
-            ax.set_xlim(left=0)
-        env["panel"](ax, letter, "RPE1 paired differences" if paired else "RPE1 mean response")
-        env["light_grid"](ax, "x")
-    handles, _ = axes[0, 0].get_legend_handles_labels()
-    handles += [Line2D([], [], marker="o", color="#555555", ls="", label="TRRUST: all pairs"),
-                Line2D([], [], marker="D", color="#555555", markerfacecolor="white", ls="", label="TRRUST: overlap removed")]
-    fig.legend(handles=handles, frameon=False, ncol=3, loc="lower center", bbox_to_anchor=(.5, -.09))
-    save(build, fig, "cross_context_validation", "A–B: response AP; C: within-regulator AUROC; D: regulator-weighted AP; E–F: top-100 mean absolute response (control SD)",
-         "Preserves dumbbells and RPE1 mean/difference panels, expands space for prior target in-degree. "
-         "T cells read primary rows directly from calibrated T-cell response tables. "
-         "RPE1 continuous magnitude remains distinct from response AP. "
-         "Constant within-regulator out-degree is omitted.", True)
+        groups = [names.get(str(t), str(t)) for t in wide.index] + ["Mean"]
+        tcells[condition] = (groups, {m: [*wide[m].tolist(), float(wide[m].mean())] for m in shown}, [*prevalence.tolist(), float(prevalence.mean())])
+    matched_methods = ["BEACON", "GNNLink", "Topology control", "Prior target in-degree", "RegGAIN", "Target expression"]
+    series, errors = {m: [] for m in matched_methods}, {m: [] for m in matched_methods}
+    for condition in ("tcell_resting", "tcell_stimulated", "rpe1"):
+        values, spans = ratio_series(summary, condition, 100, matched_methods)
+        for m in matched_methods:
+            series[m].append(values[m]); errors[m].append(spans[m])
+    errors = {m: np.array(v).T for m, v in errors.items()}
+    wide, indices, _ = rpe1_values(build)
+    means, spans = {}, {}
+    for key, name in RPE_NAMES.items():
+        values = wide[key].to_numpy()
+        low, high = np.quantile(values[indices].mean(axis=1), [.025, .975])
+        means[name], spans[name] = float(values.mean()), (float(values.mean() - low), float(high - values.mean()))
+    trrust = build.csv("trrust_rankings")  # paired-monitor GRNBoost2
+    trrust_methods = ["BEACON", "GNNLink", "GENELink", "GRNBoost2", "GENIE3", "Inferelator", POP[0]]
+    wide = {e: trrust[trrust.evaluation.eq(e)].set_index("method") for e in ("all", "overlap_removed")}
+    table = {metric: {m: [float(wide[e].loc[m, metric]) for e in wide] for m in trrust_methods} for metric in ("auroc", "average_precision")}
+    chance = [float(wide[e].loc[POP[1], "average_precision"]) for e in wide]
+    legend = ["BEACON", "GNNLink", "RegGAIN", "Topology control", "Prior target in-degree", "Target expression",
+              "GENELink", "GRNBoost2", "GENIE3", "Inferelator"]
+    fig = drawing.cross_context(tcells, (["Resting T cells", "Re-stimulated T cells", "RPE1"], series), errors,
+                                (means, spans), table, chance, legend)
+    save(build, fig, "cross_context_validation", "A–B: response AP; C: top-100 observed over expression-matched fraction; "
+         "D: top-100 mean absolute response; E: within-regulator AUROC; F: regulator-weighted AP",
+         "Primary T-cell, RPE1 and TRRUST endpoints with the target-expression control; 95% regulator-bootstrap intervals in C and D.")
+
 
 def matched_target_panel(ax, challenge, datasets):
     labels = ["BEACON", "Topology control", "GNNLink", "RegGAIN"]
