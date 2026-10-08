@@ -232,3 +232,29 @@ def specificity(build):
     emit(build, "tab:specificity_external", ["Assay", "TFs", "Edges per TF", "BEACON", "GNNLink", "Random", "BEACON", "GNNLink", "Random"], rows,
          "median Spearman with the consensus ranking; regulator-specific residual AP over chance",
          "Consensus is the mean target rank across evaluated regulators; the random ranking sets the agreement expected by chance.")
+
+
+def ablations(build, completion):
+    """Main-text ablation table: pooled AUPRC and all-TF mean AP at 80% prior coverage, best value per column in bold."""
+    from figures.render import COMPONENTS
+    from figures.drawing import DS
+    frame = completion.query('coverage == .8 and ratio == 5 and corruption == 0')
+    rows = []
+    for variant, method, label in COMPONENTS:
+        part = frame[(frame.variant == variant) & (frame.method == method)]
+        if len(part) != 12:
+            raise ValueError(f"Incomplete ablation: {label}")
+        rows.append((label, [part[part.dataset_id == d][m].mean() for m in ("auprc_trapezoid", "all_tf_ap") for d in DS]))
+    best = [max(values[c] for _, values in rows) for c in range(8)]
+    lines = [r"\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lrrrrrrrr@{}}", r"\toprule",
+             r" & \multicolumn{4}{c}{Pooled AUPRC} & \multicolumn{4}{c}{All-TF mean AP} \\",
+             r"\cmidrule(lr){2-5}\cmidrule(lr){6-9}",
+             r"Model & hESC & mDC & mHSC-E & mESC & hESC & mDC & mHSC-E & mESC \\", r"\midrule"]
+    for i, (label, values) in enumerate(rows):
+        if label.startswith("Prior") and not rows[i - 1][0].startswith("Prior"):
+            lines.append(r"\midrule")
+        cells = [(r"\textbf{%.3f}" % v) if f"{v:.3f}" == f"{best[c]:.3f}" else f"{v:.3f}" for c, v in enumerate(values)]
+        lines.append(" & ".join([label, *cells]) + r" \\")
+    lines += [r"\bottomrule", r"\end{tabular*}", ""]
+    build.table("ablations", "\n".join(lines), "pooled trapezoid AUPRC; all-TF mean AP",
+                "Means across split seeds 14, 42 and 100 at 80% prior coverage; bold marks the highest value in each column.")

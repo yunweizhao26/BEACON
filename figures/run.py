@@ -29,7 +29,7 @@ def main():
     elif a.kind=="supplementary":render.supplementary(build,metrics,completion)
     else:
         tables.dimensions(build);tables.trrust(build);tables.scregnet(build,completion)
-        tables.expression(build,metrics);tables.sensitivity(build);tables.response_tables(build);tables.specificity(build)
+        tables.expression(build,metrics);tables.sensitivity(build);tables.response_tables(build);tables.specificity(build);tables.ablations(build,completion)
     build.finish()
 
 if __name__=="__main__":main()

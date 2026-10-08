@@ -140,12 +140,6 @@ def main_figures(build, completion):
     drawing.prior_completion(env['coverage'], env['primary'], env['save'])
 
     response, comparisons, binding, ra, ba = assays(build)
-    env.update(components=COMPONENTS, ablation=completion.query('coverage == .8 and ratio == 5 and corruption == 0'))
-    def save_components(fig, name):
-        save(build, fig, name, "A: pooled trapezoid AUPRC; B: all-TF mean AP; C: paired K562 response AP differences",
-             "Ablations of the final model with the two prior-only rankings; K562 expression controls with regulator-bootstrap intervals.")
-    drawing.component_evidence(env['components'], env['ablation'], comparisons, save_components)
-
     summary, controls = matched_results(build)
     experimental_validation(build, ra, ba, summary, controls)
     cross_context(build, summary, controls)

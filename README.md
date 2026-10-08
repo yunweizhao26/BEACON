@@ -48,7 +48,7 @@ One command per main-text output:
 python -m figures.run tables --only reference_dimensions --out results/reference_dimensions
 python -m figures.run main --only beacon_overview --out results/overview
 python -m figures.run main --only prior_completion --out results/prior_completion
-python -m figures.run main --only component_evidence --out results/components
+python -m figures.run tables --only ablations --out results/ablations
 python -m figures.run main --only experimental_validation --out results/experimental_validation
 python -m figures.run main --only cross_context_validation --out results/cross_context
 ```
