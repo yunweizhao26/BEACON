@@ -157,10 +157,6 @@
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
-      "path": "figures/architecture.py",
-      "sha256": "393bdb0063f3f2484945d24b60a276b7f47cb329994ce14c7306747db0fdb320"
-    },
-    {
       "path": "figures/build.py",
       "sha256": "1d817e4e783598d046fed491cacdc1e47e69244c7cc24483c56796ab07997400"
     },
@@ -177,12 +173,16 @@
       "sha256": "b73d35181be5fe0af5a84baf3a96441bed0efe0a415e351d196e3699c9c42d44"
     },
     {
+      "path": "figures/overview.py",
+      "sha256": "523ffa2411cd8ac6bd1b1b03ee9af62e088142d588d48083c5e7d096cf858aa9"
+    },
+    {
       "path": "figures/precision.py",
       "sha256": "7f61151ba821df727013b81758221d90eff72f6033441fc0db608604695b19a9"
     },
     {
       "path": "figures/render.py",
-      "sha256": "ccfa2dcb5bbb41f7ce79243464e755be949b17726f052c856e98991f5156d933"
+      "sha256": "da37abf57411a899691fb86b8f70332b6bd23aa986cb82d92999012c46228aac"
     },
     {
       "path": "figures/run.py",

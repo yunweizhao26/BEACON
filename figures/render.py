@@ -41,34 +41,9 @@ RPE_NAMES = {"beacon_model": "BEACON", "gnnlink": "GNNLink", "reggain": "RegGAIN
 TIED_AUPRC_NOTE = ("Tied constant scores inflate trapezoid AUPRC for prior controls "
                    "(up to 0.105 for target in-degree, DS1514); this area is not enrichment.")
 
-def architecture(build):
-    from figures import architecture as arch
-    # Capture its existing artists before rendering: preserve boxes, colors and arrows.
-    arch.OUT = build.directory
-    arch.GP_PARAMS = 500 * 32 + 500 + 500 * 501 // 2 + 7
-    with patch.object(Figure, "savefig", lambda *args, **kwargs: None):
-        arch.main()
-    fig = plt.gcf()
-    found = set()
-    for text in fig.findobj(matplotlib.text.Text):
-        value = text.get_text()
-        if "Minibatch: 32 observed" in value:
-            text.set_text("Minibatch: 32 observed + 160 sampled unlabeled pairs · AdamW · 100 encoder epochs\n"
-                          "Shared MLP and pair decoder: class-weighted BCE only; no contrastive / SNN loss")
-            found.add("encoder")
-        elif value.startswith("kernel $"):
-            text.set_text(r"$k = k_{reg} + k_{tgt} + k_{pair}$" + "\nM = 500 inducing inputs\n" + r"$q(f_M) = \mathcal{N}(m,S)$")
-            found.add("kernel")
-        elif value.startswith("Fitted on the same labeled pairs"):
-            text.set_text("Internal 10% split selects GP training length by early stopping\n"
-                          "Refit encoder and GP on all training pairs; Bernoulli likelihood with probit link\n"
-                          "25-epoch GP fallback when the internal split has too few positives (see configuration audit)")
-            found.add("refit")
-    if found != {"encoder", "kernel", "refit"}:
-        raise ValueError(f"Architecture artist anchors changed: {found}")
-    save(build, fig, "beacon_overview", "schematic (no empirical metric)",
-         "Reuses architecture boxes and arrows. Shared MLP, pair-decoder class-weighted BCE, additive GP, "
-         "500 inducing points, internal 10% stopping split and refit replace the old joint-kernel/50-epoch description.")
+def overview(build):
+    from figures.overview import draw
+    save(build, draw(), "beacon_overview", "schematic (no empirical metric)", "Method and evaluation schematic.")
 
 def assays(build):
     root = build.assays
@@ -119,7 +94,7 @@ def rpe1_values(build):
     return wide, indices, report
 
 def main_figures(build, completion):
-    architecture(build)
+    overview(build)
     env = namespace()
     labels = {"beacon": "BEACON", "degree_logistic": env["TOPOLOGY"], "gnnlink": "GNNLink", "reggain": "RegGAIN",
               "gclink": "GCLink", "scregulate": "scRegulate", **{m: m for m in POP}}
