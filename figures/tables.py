@@ -21,7 +21,7 @@ def tabular(headers, rows, *, blocks=None, reused=(), longtable=False):
     if any(len(row) != len(headers) for row in rows):
         raise ValueError("Table row width differs from header")
     text_columns = {"Context", "Method", "Pool", "Design", "Readout", "Evaluation", "Method / readout",
-                    "Expression input", "Score", "Condition", "TF"}
+                    "Expression input", "Score", "Condition", "TF", "Assay"}
     alignment = "".join("l" if h in text_columns else "r" for h in headers)
     environment = "longtable" if longtable else "tabular"
     if longtable:
@@ -206,3 +206,29 @@ def response_tables(build):
          "donor QC counts and configured tested/supported discovery counts",
          "T-cell eligibility: primary paired-donor definition. Donor metadata is unchanged; tested discovery denominators "
          "and responses come directly from the response evaluation: 3,043 resting and 1,015 re-stimulated responses.", True)
+
+
+def specificity(build):
+    from evaluation.specificity import fixed_pools, external
+    fixed = fixed_pools(build.bundle)
+    rows = []
+    for (context, coverage), part in fixed.groupby(["context", "coverage"], sort=False):
+        cells = []
+        for method in ("BEACON", "GNNLink", "Topology control"):
+            gain = part[part.method.eq(method)].gain
+            cells.append(f"{gain.mean():.2f} [{gain.min():.2f}, {gain.max():.2f}]")
+        rows.append([context, f"{coverage * 100:g}", f"{part.revealed_per_regulator.mean():.1f}", *cells])
+    emit(build, "tab:specificity_fixed", ["Context", "Revealed (%)", "Edges per TF", "BEACON", "GNNLink", "Topology control"], rows,
+         "within-regulator AP over target-only AP",
+         "Means [minimum, maximum] across three splits; held-out edges whose reverse was revealed are excluded.")
+    frame = external(build.bundle)
+    names = {"k562": "K562", "tcell_resting": "Resting T cells", "tcell_stimulated": "Re-stimulated T cells", "rpe1": "RPE1"}
+    rows = []
+    for context, part in frame.groupby("context", sort=False):
+        part = part.set_index("method")
+        rows.append([names[context], str(int(part.regulators.iloc[0])), f"{part.revealed_per_regulator.iloc[0]:.1f}",
+                     *[f"{part.loc[m, 'consensus_spearman']:.3f}" for m in ("BEACON", "GNNLink", "Random")],
+                     *[f"{part.loc[m, 'residual_ap_over_chance']:.2f}" for m in ("BEACON", "GNNLink", "Random")]])
+    emit(build, "tab:specificity_external", ["Assay", "TFs", "Edges per TF", "BEACON", "GNNLink", "Random", "BEACON", "GNNLink", "Random"], rows,
+         "median Spearman with the consensus ranking; regulator-specific residual AP over chance",
+         "Consensus is the mean target rank across evaluated regulators; the random ranking sets the agreement expected by chance.")

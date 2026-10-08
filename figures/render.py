@@ -113,10 +113,28 @@ def main_figures(build, completion):
                 color, marker, ls = STYLES[method]
                 ax.plot(g.index * 100, g["mean"], color=color, marker=marker, ls=ls, ms=3)
                 ax.fill_between(g.index * 100, g["min"], g["max"], color=color, alpha=.08)
+        # Open markers: pooled AUPRC after excluding held-out edges whose reverse was revealed.
+        from evaluation.metrics import binary_metrics
+        from evaluation.specificity import fixed_pool
+        ax, labels = fig.axes[4], list(env["FIG2_STYLE"])
+        offsets = dict(zip(labels, np.linspace(.27, -.27, len(labels))))
+        for y, dataset in zip(np.arange(4)[::-1], env["DS"]):
+            values = {}
+            for seed in (42, 14, 100):
+                edges, y_true, scores, reverse, _ = fixed_pool(build.bundle, dataset, seed, .8)
+                keep = ~(y_true & reverse)
+                for method, s in scores.items():
+                    values.setdefault(method, []).append(binary_metrics(y_true[keep].astype(int), s[keep])["auprc_trapezoid"])
+            for method, v in values.items():
+                color = env["FIG2_STYLE"][method][0]
+                ax.plot(np.mean(v), y + offsets[method], marker=env["FIG2_STYLE"][method][1], ms=4.5, ls="",
+                        markerfacecolor="white", markeredgecolor=color, markeredgewidth=.9, zorder=4)
         for legend in list(fig.legends):
             legend.remove()
         handles = [Line2D([0], [0], color=s[0], marker=s[1], ls=s[2], label=m, ms=4) for m, s in env["FIG2_STYLE"].items()]
-        fig.legend(handles=handles, ncol=4, frameon=False, loc="lower center", bbox_to_anchor=(.5, -.07))
+        handles.append(Line2D([0], [0], color="#555555", marker="o", ls="", markerfacecolor="white", ms=4,
+                              label="Open: reverse-revealed held-out edges excluded"))
+        fig.legend(handles=handles, ncol=5, frameon=False, loc="lower center", bbox_to_anchor=(.5, -.09))
         save(build, fig, name, "A–E: pooled trapezoid AUPRC; F: all-TF mean AP",
              "Same four coverage curves and two 80%-prior comparison panels. Adds both prior popularity controls; saved BEACON fit replaces BEACON and topology values.")
     env["save"] = save_prior
