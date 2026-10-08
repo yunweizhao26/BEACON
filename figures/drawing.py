@@ -73,11 +73,11 @@ def label_panel(ax,letter,title):
 
 def prior_completion(coverage, primary, save):
     # Figure 2: coverage and raw revised benchmark metrics.
-    fig = plt.figure(figsize=(7.15, 3.55))
-    gs = fig.add_gridspec(2, 1, height_ratios=[1, .70], left=.07, right=.99,
-                          bottom=.18, top=.96, hspace=.52)
+    fig = plt.figure(figsize=(7.15, 4.1))
+    gs = fig.add_gridspec(2, 1, height_ratios=[1, .95], left=.07, right=.99,
+                          bottom=.15, top=.96, hspace=.45)
     top_gs = gs[0].subgridspec(1, 4, wspace=.24)
-    bottom_gs = gs[1].subgridspec(1, 2, wspace=.36)
+    bottom_gs = gs[1].subgridspec(1, 2, wspace=.2)
     for j, (dataset, title) in enumerate(zip(DS, CONTEXT)):
         ax = fig.add_subplot(top_gs[j])
         for label in ['BEACON',TOPOLOGY,'GNNLink','RegGAIN']:
@@ -93,23 +93,20 @@ def prior_completion(coverage, primary, save):
         ax.set_xlabel('Prior revealed (%)')
         ax.text(.02,.97,chr(ord('A')+j),transform=ax.transAxes,weight='bold',va='top',fontsize=9)
     axes = [fig.add_subplot(bottom_gs[0]), fig.add_subplot(bottom_gs[1])]
-    for ax, metric, title, letter in zip(axes, ['auprc_trapezoid','all_tf_ap'],
-                                         ['80% prior: pooled AUPRC','80% prior: all-TF mean AP'], ['e','f']):
-        y = np.arange(4)[::-1]
-        for offset, label in zip(np.linspace(.27,-.27,len(FIG2_STYLE)), FIG2_STYLE):
-            means=[]; lows=[]; highs=[]
+    methods = list(FIG2_STYLE)
+    for ax, metric, title, letter, ylabel in zip(axes, ['auprc_trapezoid', 'all_tf_ap'],
+                                                 ['80% prior: pooled AUPRC', '80% prior: all-TF mean AP'], ['e', 'f'],
+                                                 ['Pooled AUPRC', 'All-TF mean AP']):
+        series, errors = {}, {}
+        for m in methods:
+            means, spans = [], []
             for dataset in DS:
-                vals = primary[(primary.dataset==dataset)&(primary.label==label)][metric]
+                vals = primary[(primary.dataset == dataset) & (primary.label == m)][metric]
                 assert len(vals) == 3
-                mean=vals.mean(); means.append(mean); lows.append(mean-vals.min()); highs.append(vals.max()-mean)
-            color, marker, _ = FIG2_STYLE[label]
-            ax.errorbar(means, y+offset, xerr=np.array([lows,highs]), fmt=marker,
-                        color=color, markeredgecolor='#222222', markeredgewidth=.35,
-                        ms=4.5, capsize=1.3, lw=.65, label=label)
-        ax.set_yticks(y, SHORT); ax.set_xlim(left=0); ax.xaxis.set_major_locator(MaxNLocator(4))
-        right = ax.get_xlim()[1]
-        ax.set_xlim(-.035 * right, right)
-        light_grid(ax,'x'); panel(ax,letter,title)
+                means.append(vals.mean()); spans.append((vals.mean() - vals.min(), vals.max() - vals.mean()))
+            series[m], errors[m] = means, np.array(spans).T
+        grouped_bars(ax, SHORT, series, errors=errors)
+        ax.set_ylabel(ylabel); panel(ax, letter, title)
     fig2_handles = row_major([Line2D([0],[0],color=FIG2_STYLE[m][0],marker=FIG2_STYLE[m][1],
                            ls=FIG2_STYLE[m][2],label=m,ms=4) for m in FIG2_STYLE], 4)
     fig.legend(handles=fig2_handles, frameon=False, ncol=6, loc='lower center',
