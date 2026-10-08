@@ -29,18 +29,33 @@ CONTEXT = ['hESC\nSTRING reference', 'mDC\nnon-specific ChIP-seq',
 
 TF_COUNT = {1501: 410, 1605: 321, 1709: 205, 1801: 620}
 
-METHOD_STYLE = {
-    'BEACON': ('#1B9E77', 'o', '-'),
-    'GNNLink': ('#D95F02', 's', '--'),
-    'GCLink': ('#66A61E', '^', '-.'),
-    'scRegulate': ('#E6AB02', 'D', ':'),
-    'RegGAIN': ('#7570B3', 'v', (0, (4, 2))),
-}
+# One order and one style per method in every figure: color, marker, line style, hatch.
+ORDER = ['BEACON', 'GNNLink', 'GCLink', 'scRegulate', 'RegGAIN', 'GENELink', 'GRNBoost2', 'GENIE3', 'Inferelator',
+         'Topology control', 'Prior target in-degree', 'Prior regulator out-degree',
+         'Target expression', 'Expression correlation', 'Target detection']
+STYLE = {
+    'BEACON': ('#0B6E4F', 'o', '-', ''), 'GNNLink': ('#C0480A', 's', '--', ''), 'GCLink': ('#4D7F17', '^', '-.', ''),
+    'scRegulate': ('#A67C00', 'D', ':', ''), 'RegGAIN': ('#5A4E9B', 'v', (0, (4, 2)), ''), 'GENELink': ('#B5155E', 'P', '-', ''),
+    'GRNBoost2': ('#7F4F24', 'h', '-', ''), 'GENIE3': ('#1F5F99', '*', '-', ''), 'Inferelator': ('#B22222', 'd', '-', ''),
+    'Topology control': ('#2B2B2B', 'X', (0, (1.5, 1.2)), ''), 'Prior target in-degree': ('#555555', '>', '-.', '///'),
+    'Prior regulator out-degree': ('#7A7A7A', '<', ':', '\\\\'), 'Target expression': ('#8F8F8F', 'p', '-', 'xx'),
+    'Expression correlation': ('#A8A8A8', 'H', '-', '...'), 'Target detection': ('#6E6E6E', 'p', '-', '++')}
+
+def ordered(methods):
+    return sorted(methods, key=ORDER.index)
+
+def row_major(items, ncol):
+    """Matplotlib fills legend columns first; reorder so the legend reads left to right in plot order."""
+    rows = -(-len(items) // ncol)
+    grid = [items[r * ncol:(r + 1) * ncol] for r in range(rows)]
+    return [grid[r][c] for c in range(ncol) for r in range(rows) if c < len(grid[r])]
+
+METHOD_STYLE = {m: STYLE[m][:3] for m in ORDER}
 
 TOPOLOGY = 'Topology control'
 
-FIG2_STYLE = {'BEACON': METHOD_STYLE['BEACON'], TOPOLOGY: ('#555555', 'X', (0, (1.5, 1.2))),
-              **{m: METHOD_STYLE[m] for m in ['GNNLink', 'GCLink', 'scRegulate', 'RegGAIN']}}
+FIG2_STYLE = {m: STYLE[m][:3] for m in ['BEACON', 'GNNLink', 'GCLink', 'scRegulate', 'RegGAIN', TOPOLOGY,
+                                        'Prior target in-degree', 'Prior regulator out-degree']}
 
 def panel(ax, letter, title):
     ax.set_title(title, loc='left', pad=6)
@@ -95,8 +110,8 @@ def prior_completion(coverage, primary, save):
         right = ax.get_xlim()[1]
         ax.set_xlim(-.035 * right, right)
         light_grid(ax,'x'); panel(ax,letter,title)
-    fig2_handles = [Line2D([0],[0],color=FIG2_STYLE[m][0],marker=FIG2_STYLE[m][1],
-                           ls=FIG2_STYLE[m][2],label=m,ms=4) for m in FIG2_STYLE]
+    fig2_handles = row_major([Line2D([0],[0],color=FIG2_STYLE[m][0],marker=FIG2_STYLE[m][1],
+                           ls=FIG2_STYLE[m][2],label=m,ms=4) for m in FIG2_STYLE], 4)
     fig.legend(handles=fig2_handles, frameon=False, ncol=6, loc='lower center',
                bbox_to_anchor=(.5,-.035))
     save(fig, 'prior_completion')
@@ -156,12 +171,7 @@ def component_evidence(components, ablation, comparisons, save):
     return fig
 
 
-EVAL_STYLE = {
-    'BEACON': ('#1B9E77', ''), 'GNNLink': ('#D95F02', ''), 'RegGAIN': ('#7570B3', ''),
-    'Topology control': ('#555555', ''), 'Prior target in-degree': ('#0072B2', ''),
-    'Target expression': ('#D0D0D0', '////'), 'GENELink': ('#E6AB02', ''), 'GRNBoost2': ('#CC79A7', ''),
-    'GENIE3': ('#A6761D', ''), 'Inferelator': ('#56B4E9', ''), 'Expression correlation': ('#F2F2F2', '....'),
-    'Target detection': ('#D0D0D0', '////')}
+EVAL_STYLE = {m: (STYLE[m][0], STYLE[m][3]) for m in ORDER}
 
 
 def grouped_bars(ax, groups, series, errors=None, chance=None, labels=False, width=.84):
@@ -184,7 +194,7 @@ def grouped_bars(ax, groups, series, errors=None, chance=None, labels=False, wid
 
 
 def legend_below(fig, methods, ncol, y):
-    handles = [Patch(facecolor=EVAL_STYLE[m][0], hatch=EVAL_STYLE[m][1], edgecolor='#222222', linewidth=.35, label=m) for m in methods]
+    handles = row_major([Patch(facecolor=EVAL_STYLE[m][0], hatch=EVAL_STYLE[m][1], edgecolor='#222222', linewidth=.35, label=m) for m in ordered(methods)], ncol)
     fig.legend(handles=handles, ncol=ncol, frameon=False, loc='lower center', bbox_to_anchor=(.5, y))
 
 
@@ -243,7 +253,7 @@ def cross_context(tcells, matched, matched_errors, rpe1, trrust, trrust_chance, 
             ax.set_ylim(.4, None)
         ax.set_ylabel(label)
         panel(ax, 'ef'[j], title)
-    legend_below(fig, legend, ncol=5, y=-.05)
+    legend_below(fig, legend, ncol=6, y=-.05)
     return fig
 
 

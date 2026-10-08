@@ -27,7 +27,7 @@ def save(build, fig, name, metric, notes, provisional=False):
     build.save(fig, name, metric, notes)
 def tcell_evaluations(build):
     return build.tcells()
-STYLES = {POP[0]: ("#0072B2", "^", "-."), POP[1]: ("#CC79A7", "v", ":")}
+STYLES = {m: drawing.STYLE[m][:3] for m in POP}
 PUB = ["BEACON", "GNNLink", "RegGAIN", POP[0]]
 KS = [10, 25, 50, 100, 200]
 COMPONENTS = [('beacon', 'beacon', 'BEACON (full model)'), ('fa_gp', 'fa_gp', 'w/o encoder'),
@@ -134,7 +134,7 @@ def main_figures(build, completion):
         handles = [Line2D([0], [0], color=s[0], marker=s[1], ls=s[2], label=m, ms=4) for m, s in env["FIG2_STYLE"].items()]
         handles.append(Line2D([0], [0], color="#555555", marker="o", ls="", markerfacecolor="white", ms=4,
                               label="Open: reverse-revealed held-out edges excluded"))
-        fig.legend(handles=handles, ncol=5, frameon=False, loc="lower center", bbox_to_anchor=(.5, -.09))
+        fig.legend(handles=drawing.row_major(handles, 5), ncol=5, frameon=False, loc="lower center", bbox_to_anchor=(.5, -.09))
         save(build, fig, name, "A–E: pooled trapezoid AUPRC; F: all-TF mean AP",
              "Same four coverage curves and two 80%-prior comparison panels. Adds both prior popularity controls; saved BEACON fit replaces BEACON and topology values.")
     env["save"] = save_prior
@@ -199,7 +199,7 @@ def experimental_validation(build, ra, ba, summary, controls):
 
 def cross_context(build, summary, controls):
     per_tf = tcell_evaluations(build)["per_tf_metrics"].assign(method=lambda f: f.method.replace(NAMES))
-    shown = ["BEACON", "GNNLink", "Topology control", "Prior target in-degree", "Target expression"]
+    shown = K562_METHODS
     tcells = {}
     for condition in ("resting", "stimulated"):
         data = per_tf[per_tf.condition.eq(condition)]
@@ -214,7 +214,7 @@ def cross_context(build, summary, controls):
         names = dict(zip(training["genes"].astype(str), training["symbols"].astype(str)))
         groups = [names.get(str(t), str(t)) for t in wide.index] + ["Mean"]
         tcells[condition] = (groups, {m: [*wide[m].tolist(), float(wide[m].mean())] for m in shown}, [*prevalence.tolist(), float(prevalence.mean())])
-    matched_methods = ["BEACON", "GNNLink", "Topology control", "Prior target in-degree", "RegGAIN", "Target expression"]
+    matched_methods = K562_METHODS
     series, errors = {m: [] for m in matched_methods}, {m: [] for m in matched_methods}
     for condition in ("tcell_resting", "tcell_stimulated", "rpe1"):
         values, spans = ratio_series(summary, condition, 100, matched_methods)
@@ -223,7 +223,7 @@ def cross_context(build, summary, controls):
     errors = {m: np.array(v).T for m, v in errors.items()}
     wide, indices, _ = rpe1_values(build)
     means, spans = {}, {}
-    for key, name in RPE_NAMES.items():
+    for key, name in sorted(RPE_NAMES.items(), key=lambda item: drawing.ORDER.index(item[1])):
         values = wide[key].to_numpy()
         low, high = np.quantile(values[indices].mean(axis=1), [.025, .975])
         means[name], spans[name] = float(values.mean()), (float(values.mean() - low), float(high - values.mean()))
@@ -232,8 +232,7 @@ def cross_context(build, summary, controls):
     wide = {e: trrust[trrust.evaluation.eq(e)].set_index("method") for e in ("all", "overlap_removed")}
     table = {metric: {m: [float(wide[e].loc[m, metric]) for e in wide] for m in trrust_methods} for metric in ("auroc", "average_precision")}
     chance = [float(wide[e].loc[POP[1], "average_precision"]) for e in wide]
-    legend = ["BEACON", "GNNLink", "RegGAIN", "Topology control", "Prior target in-degree", "Target expression",
-              "GENELink", "GRNBoost2", "GENIE3", "Inferelator"]
+    legend = drawing.ordered(set(K562_METHODS) | set(trrust_methods) | {"Inferelator", "Expression correlation", "Target detection"})
     fig = drawing.cross_context(tcells, (["Resting T cells", "Re-stimulated T cells", "RPE1"], series), errors,
                                 (means, spans), table, chance, legend)
     save(build, fig, "cross_context_validation", "A–B: response AP; C: top-100 observed over expression-matched fraction; "
@@ -365,7 +364,7 @@ def supplementary(build, metrics, completion):
     env.update(h=build.csv("completion_summary/hard_challenge_with_popularity.csv"),
                match=build.csv("completion_summary/hard_challenge_coverage.csv"),
                grid=completion.query('variant == "beacon"').assign(control="beacon"),
-               COLORS={"BEACON": "#14678a", "Topology control": "#777777", "GNNLink": "#d37724", "RegGAIN": "#6b4c9a"},
+               COLORS={m: drawing.STYLE[m][0] for m in ("BEACON", "Topology control", "GNNLink", "RegGAIN")},
                NAMES={"beacon": "BEACON", "degree_logistic": "Topology control", "gnnlink": "GNNLink", "reggain": "RegGAIN"},
                contextcolors=['#14678a', '#b96a2b', '#6b4c9a', '#56883c'], panel=env["label_panel"])
     def save_sensitivity(fig, name):
