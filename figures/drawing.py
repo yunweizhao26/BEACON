@@ -41,6 +41,33 @@ STYLE = {
     'Prior regulator out-degree': ('#7A7A7A', '<', ':', '\\\\'), 'Target expression': ('#8F8F8F', 'p', '-', 'xx'),
     'Expression correlation': ('#A8A8A8', 'H', '-', '...'), 'Target detection': ('#6E6E6E', 'p', '-', '++')}
 
+# Published names of the baselines. Data keys keep the internal names, and relabel() renames figure text at save time.
+DISPLAY = {'Topology control': 'Degree baseline', 'Degree logistic': 'Degree baseline',
+           'Prior target in-degree': 'Target popularity', 'Prior target\nin-degree': 'Target\npopularity',
+           'Prior regulator out-degree': 'Regulator popularity', 'Prior regulator\nout-degree': 'Regulator\npopularity'}
+
+def display(text):
+    for internal, published in DISPLAY.items():
+        text = text.replace(internal, published)
+    return text
+
+def relabel(fig):
+    """Rename baselines in every text artist and in fixed or categorical tick labels, which are redrawn at save time."""
+    from matplotlib.category import StrCategoryFormatter
+    from matplotlib.ticker import FixedFormatter, FuncFormatter
+    for artist in fig.findobj(matplotlib.text.Text):
+        if artist.get_text():
+            artist.set_text(display(artist.get_text()))
+    for ax in fig.axes:
+        for axis in (ax.xaxis, ax.yaxis):
+            for formatter in (axis.get_major_formatter(), axis.get_minor_formatter()):
+                if isinstance(formatter, FixedFormatter):
+                    formatter.seq = [display(str(label)) for label in formatter.seq]
+                elif isinstance(formatter, StrCategoryFormatter):
+                    formatter._units = {display(key): value for key, value in formatter._units.items()}
+                elif isinstance(formatter, FuncFormatter):
+                    formatter.func = lambda x, pos=None, original=formatter.func: display(str(original(x, pos)))
+
 def ordered(methods):
     return sorted(methods, key=ORDER.index)
 

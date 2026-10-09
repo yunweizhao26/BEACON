@@ -105,7 +105,9 @@ class Build:
 
     def save(self, fig, name, metric, notes):
         import matplotlib.pyplot as plt
+        from figures.drawing import relabel
         if self.selected is None or name == self.selected:
+            relabel(fig)
             for extension in ("png", "pdf"):
                 path = self.directory / f"{name}.{extension}"
                 if path.exists():
@@ -117,9 +119,10 @@ class Build:
     def table(self, name, text, metric, notes):
         if self.selected is not None and name != self.selected:
             return
+        from figures.drawing import display
         path = self.directory / (name + ".tex")
         with path.open("x") as stream:
-            stream.write(text)
+            stream.write(display(text))
         self.outputs.append(dict(output=path.name, metric=metric, notes=notes, sha256=hashlib.sha256(path.read_bytes()).hexdigest()))
 
     def finish(self):
