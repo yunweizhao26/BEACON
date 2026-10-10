@@ -30,13 +30,13 @@ CONTEXT = ['hESC\nSTRING reference', 'mDC\nnon-specific ChIP-seq',
 TF_COUNT = {1501: 410, 1605: 321, 1709: 205, 1801: 620}
 
 # One order and one style per method in every figure: color, marker, line style, hatch.
-ORDER = ['BEACON', 'GNNLink', 'GCLink', 'scRegulate', 'RegGAIN', 'GENELink', 'GRNBoost2', 'GENIE3', 'Inferelator',
+ORDER = ['BEACON', 'GNNLink', 'GCLink', 'scRegulate', 'RegGAIN', 'GENELink', 'scRegNet', 'GRNBoost2', 'GENIE3', 'Inferelator',
          'Topology control', 'Prior target in-degree', 'Prior regulator out-degree',
          'Target expression', 'Expression correlation', 'Target detection']
 STYLE = {
     'BEACON': ('#0B6E4F', 'o', '-', ''), 'GNNLink': ('#C0480A', 's', '--', ''), 'GCLink': ('#4D7F17', '^', '-.', ''),
     'scRegulate': ('#A67C00', 'D', ':', ''), 'RegGAIN': ('#5A4E9B', 'v', (0, (4, 2)), ''), 'GENELink': ('#B5155E', 'P', '-', ''),
-    'GRNBoost2': ('#7F4F24', 'h', '-', ''), 'GENIE3': ('#1F5F99', '*', '-', ''), 'Inferelator': ('#B22222', 'd', '-', ''),
+    'scRegNet': ('#159AA8', '8', (0, (3, 1, 1, 1)), ''), 'GRNBoost2': ('#7F4F24', 'h', '-', ''), 'GENIE3': ('#1F5F99', '*', '-', ''), 'Inferelator': ('#B22222', 'd', '-', ''),
     'Topology control': ('#2B2B2B', 'X', (0, (1.5, 1.2)), ''), 'Prior target in-degree': ('#555555', '>', '-.', '///'),
     'Prior regulator out-degree': ('#7A7A7A', '<', ':', '\\\\'), 'Target expression': ('#8F8F8F', 'p', '-', 'xx'),
     'Expression correlation': ('#A8A8A8', 'H', '-', '...'), 'Target detection': ('#6E6E6E', 'p', '-', '++')}
@@ -344,3 +344,29 @@ def shortcut(comparison, audit):
     fig.tight_layout()
 
     return fig, axes
+
+
+def specificity_regimes(fixed, external):
+    """Regulator-specific gain against revealed edges per regulator in the fixed pools; the band marks the perturbation-assay priors."""
+    fig, ax = plt.subplots(figsize=(3.45, 2.9), layout='constrained')
+    low, high = external.revealed_per_regulator.min(), external.revealed_per_regulator.max()
+    ax.axvspan(low / 1.12, high * 1.12, color='#E3E3E3', lw=0, zorder=0)
+    ax.axhline(1, color='#777777', lw=.6, ls='--', zorder=1)
+    markers = dict(zip(SHORT, ['o', 's', '^', 'D']))
+    top = 0
+    for method in ('GNNLink', 'BEACON'):
+        color, _, style = STYLE[method][:3]
+        for context in SHORT:
+            g = (fixed[fixed.method.eq(method) & fixed.context.eq(context)].groupby('coverage')
+                 .agg(x=('revealed_per_regulator', 'mean'), y=('gain', 'mean'), low=('gain', 'min'), high=('gain', 'max')))
+            top = max(top, g.high.max())
+            ax.errorbar(g.x, g.y, yerr=[g.y - g.low, g.high - g.y], color=color, ls=style, marker=markers[context], ms=3.4, lw=1,
+                        elinewidth=.6, capsize=1.5, mfc=color if method == 'BEACON' else 'white', zorder=3 if method == 'BEACON' else 2)
+    ax.set_xscale('log'); ax.set_xticks([.3, 1, 3, 10, 30], ['0.3', '1', '3', '10', '30']); ax.minorticks_off()
+    ax.text((low * high) ** .5, top * 1.02, 'Perturbation-\nassay priors', ha='center', va='top', fontsize=6, color='#444444')
+    ax.set_xlabel('Revealed edges per regulator'); ax.set_ylabel('Within-regulator AP / target-only AP')
+    handles = [Line2D([], [], color=STYLE[m][0], ls=STYLE[m][2], marker='o', ms=3.4, mfc=STYLE[m][0] if m == 'BEACON' else 'white', label=m)
+               for m in ('BEACON', 'GNNLink')]
+    handles += [Line2D([], [], color='#555555', ls='', marker=markers[c], ms=3.4, label=c) for c in SHORT]
+    fig.legend(handles=handles, loc='outside lower center', ncol=3, frameon=False, fontsize=6.2, handlelength=1.8, columnspacing=1.0)
+    return fig

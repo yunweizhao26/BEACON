@@ -138,6 +138,10 @@ def main_figures(build, completion):
              "Same four coverage curves and two 80%-prior comparison panels. Adds both prior popularity controls; saved BEACON fit replaces BEACON and topology values.")
     env["save"] = save_prior
     drawing.prior_completion(env['coverage'], env['primary'], env['save'])
+    if build.selected in (None, "specificity_regimes"):
+        from evaluation.specificity import fixed_pools, external
+        save(build, drawing.specificity_regimes(fixed_pools(build.bundle), external(build.bundle)), "specificity_regimes",
+             "within-regulator AP over target-only AP", "Fixed-pool means and split ranges; band spans the perturbation-assay priors.")
 
     response, comparisons, binding, ra, ba = assays(build)
     summary, controls = matched_results(build)
