@@ -51,7 +51,19 @@ python -m figures.run main --only prior_completion --out results/prior_completio
 python -m figures.run tables --only ablations --out results/ablations
 python -m figures.run main --only experimental_validation --out results/experimental_validation
 python -m figures.run main --only cross_context_validation --out results/cross_context
+python -m figures.run main --only specificity_regimes --out results/specificity_regimes
 ```
+
+Temporal holdout (Figure 4 and Supplementary Tables S17 and S18). The priors hold the CollecTRI edges first reported up to 2000, 2005 or 2010, and the saved scores of every method are in the data bundle:
+
+```bash
+python -m preparation.temporal --check
+python -m evaluation.temporal --out results/temporal
+python -m figures.temporal --source results/temporal --out results/temporal_figure
+python -m experiments.temporal --context k562 --cutoff 2005 --out results/temporal_beacon_k562_2005
+```
+
+The first command rebuilds every prior, candidate mask and label set and compares them with the saved arrays. The last command refits BEACON on one prior.
 
 Supplementary figures:
 

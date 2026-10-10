@@ -1,7 +1,7 @@
 """Temporal completion: recovery of regulatory edges first reported after the prior's cutoff year.
 
-Reads the per-setting tables written by the temporal analysis (``*_metrics.csv``, ``*_paired.csv`` and
-``*_concentration.csv``) and writes the main-text figure and two supplementary tables.
+Reads the tables written by ``python -m evaluation.temporal`` (``metrics.csv``, ``paired.csv`` and
+``concentration.csv``) and writes the main-text figure and two supplementary tables.
 """
 import argparse
 from pathlib import Path
@@ -22,7 +22,7 @@ def style(method):
 
 
 def load(source):
-    read = lambda kind: pd.concat(pd.read_csv(f) for f in sorted(Path(source).glob(f'*_{kind}.csv')))
+    read = lambda kind: pd.read_csv(Path(source) / f'{kind}.csv')
     return tuple(frame[frame.cutoff.isin(CUTOFFS)] for frame in (read('metrics'), read('paired'), read('concentration')))
 
 
