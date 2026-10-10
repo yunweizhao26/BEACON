@@ -122,6 +122,7 @@ def main_figures(build, completion):
             values = {}
             for seed in (42, 14, 100):
                 edges, y_true, scores, reverse, _ = fixed_pool(build.bundle, dataset, seed, .8)
+                scores = {m: scores[m] for m in ("BEACON", "Topology control", "GNNLink")}
                 keep = ~(y_true & reverse)
                 for method, s in scores.items():
                     values.setdefault(method, []).append(binary_metrics(y_true[keep].astype(int), s[keep])["auprc_trapezoid"])

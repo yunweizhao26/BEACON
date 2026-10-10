@@ -211,16 +211,15 @@ def response_tables(build):
 def specificity(build):
     from evaluation.specificity import fixed_pools, external
     fixed = fixed_pools(build.bundle)
+    methods = ["BEACON", "GNNLink", "GCLink", "scRegulate", "RegGAIN", "GENELink", "scRegNet", "GRNBoost2", "GENIE3", "Inferelator", "Topology control"]
     rows = []
     for (context, coverage), part in fixed.groupby(["context", "coverage"], sort=False):
-        cells = []
-        for method in ("BEACON", "GNNLink", "Topology control"):
-            gain = part[part.method.eq(method)].gain
-            cells.append(f"{gain.mean():.2f} [{gain.min():.2f}, {gain.max():.2f}]")
+        means = part.groupby("method").gain.mean()
+        cells = ["--" if m not in means else f"{means[m]:.2f}" for m in methods]
         rows.append([context, f"{coverage * 100:g}", f"{part.revealed_per_regulator.mean():.1f}", *cells])
-    emit(build, "tab:specificity_fixed", ["Context", "Revealed (%)", "Edges per TF", "BEACON", "GNNLink", "Topology control"], rows,
+    emit(build, "tab:specificity_fixed", ["Context", "Revealed (%)", "Edges per TF", *methods], rows,
          "within-regulator AP over target-only AP",
-         "Means [minimum, maximum] across three splits; held-out edges whose reverse was revealed are excluded.")
+         "Means across three splits; held-out edges whose reverse was revealed are excluded.")
     frame = external(build.bundle)
     names = {"k562": "K562", "tcell_resting": "Resting T cells", "tcell_stimulated": "Re-stimulated T cells", "rpe1": "RPE1"}
     rows = []

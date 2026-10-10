@@ -30,14 +30,36 @@ def fixed_pool(bundle, dataset, seed, coverage):
     predictions = bundle.arrays(found["reference"]["predictions"])
     edges, labels = predictions["edges"], predictions["labels"].astype(bool)
     scores = {"BEACON": predictions["beacon"], "Topology control": predictions["degree_logistic"]}
-    comparator, = [c for c in manifest["comparators"] if c["suite"] == "fixed_pools" and c.get("dataset") == dataset
-                   and c["split_seed"] == seed and c["coverage"] == coverage and c["method"] == "gnnlink"]
-    gnnlink = bundle.arrays(comparator["artifacts"]["predictions"])
-    order = {tuple(edge): i for i, edge in enumerate(gnnlink["edges"])}
-    scores["GNNLink"] = gnnlink["gnnlink"][np.array([order[tuple(edge)] for edge in edges])]
+    scores.update(comparator_scores(bundle, dataset, seed, coverage, edges))
     revealed = set(map(tuple, split["supplied_positive_edges"]))
     reverse = np.array([(target, source) in revealed for source, target in edges])
     return edges, labels, scores, reverse, len(revealed) / len(split["tf_indices"])
+
+
+COMPARATORS = {"gnnlink": "GNNLink", "gclink": "GCLink", "scregulate": "scRegulate", "reggain": "RegGAIN", "genelink": "GENELink",
+               "scregnet": "scRegNet", "grnboost2": "GRNBoost2", "genie3": "GENIE3", "inferelator": "Inferelator"}
+EXPRESSION_ONLY = ("grnboost2", "genie3")
+
+
+def comparator_scores(bundle, dataset, seed, coverage, edges):
+    """Saved comparator scores on the test pairs of one fit. Expression-only networks ignore the prior and the split,
+    so their saved full-network scores serve every split at the coverage where they were run; absent pairs score zero."""
+    scores = {}
+    for entry in bundle.manifest["comparators"]:
+        method = entry.get("method")
+        if entry.get("suite") != "fixed_pools" or entry.get("dataset") != dataset or method not in COMPARATORS or entry.get("coverage") != coverage:
+            continue
+        if method not in EXPRESSION_ONLY and entry.get("split_seed") != seed:
+            continue
+        data = bundle.arrays(entry["artifacts"]["predictions"])
+        if method in EXPRESSION_ONLY:
+            order = {tuple(edge): i for i, edge in enumerate(data["eligible_edges"])}
+            scores[COMPARATORS[method]] = np.array([data["eligible_scores"][order[tuple(e)]] if tuple(e) in order else 0. for e in edges])
+            continue
+        pairs, values = (data["test_edges"], data["test_reggain"]) if method == "reggain" else (data["edges"], data[method])
+        order = {tuple(edge): i for i, edge in enumerate(pairs)}
+        scores[COMPARATORS[method]] = values[np.array([order[tuple(edge)] for edge in edges])]
+    return scores
 
 
 def specific_gain(edges, labels, scores):

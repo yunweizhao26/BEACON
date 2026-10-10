@@ -347,26 +347,44 @@ def shortcut(comparison, audit):
 
 
 def specificity_regimes(fixed, external):
-    """Regulator-specific gain against revealed edges per regulator in the fixed pools; the band marks the perturbation-assay priors."""
-    fig, ax = plt.subplots(figsize=(3.45, 2.9), layout='constrained')
+    """Regulator-specific gain (top) and within-regulator AP (bottom) against revealed edges per regulator in each fixed pool.
+    Lines join the coverage levels of methods fitted at every coverage; markers show methods run at 80% coverage. The band
+    marks the perturbation-assay priors."""
+    curves = ['RegGAIN', 'Topology control', 'GNNLink', 'BEACON']
+    points = ['GCLink', 'scRegulate', 'GENELink', 'scRegNet', 'GRNBoost2', 'GENIE3', 'Inferelator']
+    fig, axes = plt.subplots(2, 4, figsize=(7.15, 4.3), layout='constrained', sharex='col', sharey='row')
     low, high = external.revealed_per_regulator.min(), external.revealed_per_regulator.max()
-    ax.axvspan(low / 1.12, high * 1.12, color='#E3E3E3', lw=0, zorder=0)
-    ax.axhline(1, color='#777777', lw=.6, ls='--', zorder=1)
-    markers = dict(zip(SHORT, ['o', 's', '^', 'D']))
-    top = 0
-    for method in ('GNNLink', 'BEACON'):
-        color, _, style = STYLE[method][:3]
-        for context in SHORT:
-            g = (fixed[fixed.method.eq(method) & fixed.context.eq(context)].groupby('coverage')
-                 .agg(x=('revealed_per_regulator', 'mean'), y=('gain', 'mean'), low=('gain', 'min'), high=('gain', 'max')))
-            top = max(top, g.high.max())
-            ax.errorbar(g.x, g.y, yerr=[g.y - g.low, g.high - g.y], color=color, ls=style, marker=markers[context], ms=3.4, lw=1,
-                        elinewidth=.6, capsize=1.5, mfc=color if method == 'BEACON' else 'white', zorder=3 if method == 'BEACON' else 2)
-    ax.set_xscale('log'); ax.set_xticks([.3, 1, 3, 10, 30], ['0.3', '1', '3', '10', '30']); ax.minorticks_off()
-    ax.text((low * high) ** .5, top * 1.02, 'Perturbation-\nassay priors', ha='center', va='top', fontsize=6, color='#444444')
-    ax.set_xlabel('Revealed edges per regulator'); ax.set_ylabel('Within-regulator AP / target-only AP')
-    handles = [Line2D([], [], color=STYLE[m][0], ls=STYLE[m][2], marker='o', ms=3.4, mfc=STYLE[m][0] if m == 'BEACON' else 'white', label=m)
-               for m in ('BEACON', 'GNNLink')]
-    handles += [Line2D([], [], color='#555555', ls='', marker=markers[c], ms=3.4, label=c) for c in SHORT]
-    fig.legend(handles=handles, loc='outside lower center', ncol=3, frameon=False, fontsize=6.2, handlelength=1.8, columnspacing=1.0)
+    for row, (metric, label) in enumerate((('gain', 'Within-regulator AP /\ntarget-only AP'), ('within_ap', 'Within-regulator AP'))):
+        for ax, context in zip(axes[row], SHORT):
+            part = fixed[fixed.context.eq(context)]
+            ax.axvspan(low / 1.12, high * 1.12, color='#E3E3E3', lw=0, zorder=0)
+            if metric == 'gain':
+                ax.axhline(1, color='#777777', lw=.6, ls='--', zorder=1)
+            for method in curves:
+                g = (part[part.method.eq(method)].groupby('coverage')
+                     .agg(x=('revealed_per_regulator', 'mean'), y=(metric, 'mean'), low=(metric, 'min'), high=(metric, 'max')))
+                color, marker, style = STYLE[method][:3]
+                ax.errorbar(g.x, g.y, yerr=[g.y - g.low, g.high - g.y], color=color, ls=style, marker=marker, ms=3,
+                            lw=1 if method == 'BEACON' else .8, elinewidth=.5, capsize=1.2, zorder=4 if method == 'BEACON' else 3)
+            top = part[part.coverage.eq(.8)]
+            x80 = top.revealed_per_regulator.mean()
+            present = [m for m in points if m in set(top.method)]
+            for k, method in enumerate(present):
+                g = top[top.method.eq(method)][metric]
+                x = x80 * 1.12 ** (k - (len(present) - 1) / 2 + .5)
+                color, marker = STYLE[method][:2]
+                ax.errorbar([x], [g.mean()], yerr=[[g.mean() - g.min()], [g.max() - g.mean()]], color=color, marker=marker, ms=3.2, ls='',
+                            elinewidth=.5, capsize=1.2, mfc='white', zorder=2)
+            ax.set_xscale('log'); ax.set_xticks([.3, 1, 3, 10, 30], ['0.3', '1', '3', '10', '30']); ax.minorticks_off()
+            if row == 0:
+                ax.set_title(context, fontsize=8)
+            else:
+                ax.set_xlabel('Revealed edges per regulator', fontsize=6.8)
+        axes[row, 0].set_ylabel(label)
+        axes[row, 0].text(-.42, 1.04, 'AB'[row], transform=axes[row, 0].transAxes, fontsize=10, weight='bold', va='bottom')
+    axes[0, 0].text((low * high) ** .5, axes[0, 0].get_ylim()[1], 'Perturbation-\nassay priors', ha='center', va='top', fontsize=5.6, color='#444444')
+    order = ['BEACON', 'GNNLink', 'RegGAIN', 'Topology control'] + points
+    handles = [Line2D([], [], color=STYLE[m][0], ls=STYLE[m][2] if m in curves else '', marker=STYLE[m][1], ms=3.2,
+                      mfc=STYLE[m][0] if m in curves else 'white', label=m) for m in order]
+    fig.legend(handles=row_major(handles, 6), loc='outside lower center', ncol=6, frameon=False, fontsize=6.2, handlelength=1.8, columnspacing=1.0)
     return fig
