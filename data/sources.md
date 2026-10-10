@@ -14,6 +14,7 @@ These sources and accessions are transcribed from the recorded research receipts
 | Curated prior | [OmniPath](https://omnipathdb.org): human DoRothEA levels A/B. Use the frozen source-restricted prior and its publication/source audit, not a new unrestricted query. |
 | Human TF catalogue | [Human TF database](https://humantfs.ccbr.utoronto.ca/download.php), recorded database extract 1.01. |
 | scGPT input | [Checkpoint](https://huggingface.co/wanglab/scGPT-human), [upstream code](https://github.com/bowang-lab/scGPT). Token embeddings, complete union, missing indicators and evaluation-universe mappings are frozen in the bundle. |
+| Temporal holdout | [OmniPath](https://omnipathdb.org) CollecTRI TF--target interactions with their PubMed references (Müller-Dott et al., Nucleic Acids Res. 2023). Publication years of the referenced PubMed records were retrieved on 8 October 2026 with the NCBI E-utilities summary service in JSON requests of 500 identifiers. The bundle stores the reference table and the year of every dated record. |
 | Geneformer input for scRegNet | GF-20L-95M-i4096, identified by the recorded embedding/checkpoint hashes. Original download location remains unresolved. |
 
 The exact raw-to-processed BEELINE recipe and original sampled-split command were not traced. The original ENCODE metadata query, curated-prior writer and TRRUST download receipt also remain unresolved. The release preserves their processed evidence; it does not claim those missing recipes can be reconstructed from upstream defaults.
