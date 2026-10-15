@@ -98,8 +98,11 @@ def label_panel(ax,letter,title):
     ax.text(-.16,1.07,letter,transform=ax.transAxes,weight='bold',fontsize=11)
 
 
-def prior_completion(coverage, primary, save):
-    # Figure 2: coverage and raw revised benchmark metrics.
+FIG2_POINTS = ['GCLink', 'scRegulate']
+
+
+def prior_completion(coverage, primary, excluded, save):
+    # Figure 2: coverage curves, then pooled AUPRC without reverse pairs and all-TF mean AP at 80% prior coverage.
     fig = plt.figure(figsize=(7.15, 4.1))
     gs = fig.add_gridspec(2, 1, height_ratios=[1, .95], left=.07, right=.99,
                           bottom=.15, top=.96, hspace=.45)
@@ -114,29 +117,37 @@ def prior_completion(coverage, primary, save):
             ax.plot(stats.index*100, stats['mean'], marker=marker, ms=3.8,
                     color=color, ls=ls, label=label)
             ax.fill_between(stats.index*100, stats['min'], stats['max'], color=color, alpha=.10)
+        # Methods run only at 80% coverage: open markers right of the curves, whiskers span the splits.
+        for k, label in enumerate(FIG2_POINTS):
+            vals = primary[(primary.dataset == dataset) & (primary.label == label)].auprc_trapezoid
+            assert len(vals) == 3
+            color, marker, _ = FIG2_STYLE[label]
+            ax.errorbar([84 + 4 * k], [vals.mean()], yerr=[[vals.mean() - vals.min()], [vals.max() - vals.mean()]], color=color,
+                        marker=marker, ms=3.4, ls='', mfc='white', elinewidth=.5, capsize=1.2)
         ax.set_title(title, pad=3); ax.set_xticks([5,20,40,80]); ax.set_ylim(bottom=0)
         ax.yaxis.set_major_locator(MaxNLocator(4)); light_grid(ax)
-        if j == 0: ax.set_ylabel('AUPRC')
+        if j == 0: ax.set_ylabel('Pooled AUPRC')
         ax.set_xlabel('Prior revealed (%)')
         ax.text(.02,.97,chr(ord('A')+j),transform=ax.transAxes,weight='bold',va='top',fontsize=9)
     axes = [fig.add_subplot(bottom_gs[0]), fig.add_subplot(bottom_gs[1])]
     methods = list(FIG2_STYLE)
-    for ax, metric, title, letter, ylabel in zip(axes, ['auprc_trapezoid', 'all_tf_ap'],
-                                                 ['80% prior: pooled AUPRC', '80% prior: all-TF mean AP'], ['e', 'f'],
-                                                 ['Pooled AUPRC', 'All-TF mean AP']):
+    for ax, frame, metric, title, letter, ylabel in zip(axes, [excluded, primary], ['auprc_trapezoid', 'all_tf_ap'],
+                                                        ['80% prior without reverse pairs: pooled AUPRC', '80% prior: all-TF mean AP'],
+                                                        ['e', 'f'], ['Pooled AUPRC', 'All-TF mean AP']):
         series, errors = {}, {}
         for m in methods:
             means, spans = [], []
             for dataset in DS:
-                vals = primary[(primary.dataset == dataset) & (primary.label == m)][metric]
+                vals = frame[(frame.dataset == dataset) & (frame.label == m)][metric]
                 assert len(vals) == 3
                 means.append(vals.mean()); spans.append((vals.mean() - vals.min(), vals.max() - vals.mean()))
             series[m], errors[m] = means, np.array(spans).T
         grouped_bars(ax, SHORT, series, errors=errors)
         ax.set_ylabel(ylabel); panel(ax, letter, title)
     fig2_handles = row_major([Line2D([0],[0],color=FIG2_STYLE[m][0],marker=FIG2_STYLE[m][1],
-                           ls=FIG2_STYLE[m][2],label=m,ms=4) for m in FIG2_STYLE], 4)
-    fig.legend(handles=fig2_handles, frameon=False, ncol=6, loc='lower center',
+                           ls='' if m in FIG2_POINTS else FIG2_STYLE[m][2],mfc='white' if m in FIG2_POINTS else FIG2_STYLE[m][0],
+                           label=m,ms=4) for m in FIG2_STYLE], 4)
+    fig.legend(handles=fig2_handles, frameon=False, ncol=4, loc='lower center',
                bbox_to_anchor=(.5,-.035))
     save(fig, 'prior_completion')
 

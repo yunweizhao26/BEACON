@@ -25,12 +25,17 @@ COVERAGES = (.05, .1, .2, .4, .8)
 SPLITS = (42, 14, 100)
 
 
-def fixed_pool(bundle, dataset, seed, coverage):
-    """Test pairs, labels, scores, reverse-edge flags and revealed edges per regulator for one fixed-pool fit."""
-    manifest = bundle.manifest
-    found, = [e for e in manifest["experiments"] if e["suite"] == "fixed_pools" and e["condition"]["dataset"] == dataset
+def fixed_experiment(bundle, dataset, seed, coverage):
+    """The reported BEACON fit of one fixed-pool setting."""
+    found, = [e for e in bundle.manifest["experiments"] if e["suite"] == "fixed_pools" and e["condition"]["dataset"] == dataset
               and e["condition"]["split_seed"] == seed and e["condition"]["coverage"] == coverage and e["condition"]["ratio"] == 5
               and e["condition"]["corruption"] == 0 and e["condition"]["control"] == "beacon" and not e["condition"]["snn_weight"]]
+    return found
+
+
+def fixed_pool(bundle, dataset, seed, coverage):
+    """Test pairs, labels, scores, reverse-edge flags and revealed edges per regulator for one fixed-pool fit."""
+    found = fixed_experiment(bundle, dataset, seed, coverage)
     split = bundle.arrays(found["reference"]["split"])
     predictions = bundle.arrays(found["reference"]["predictions"])
     edges, labels = predictions["edges"], predictions["labels"].astype(bool)

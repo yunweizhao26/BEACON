@@ -92,6 +92,22 @@ def rpe1_values(build):
     indices = old["indices"] if np.array_equal(old["tf_genes"], wide.index.to_numpy()) else np.random.default_rng(9071).integers(len(wide), size=(10000, len(wide)))
     return wide, indices, report
 
+def reverse_excluded(build, methods):
+    """Pooled AUPRC at 80% prior coverage after excluding every test pair whose reverse was revealed, one row per split."""
+    from evaluation.metrics import binary_metrics, popularity
+    from evaluation.specificity import fixed_experiment, fixed_pool
+    rows = []
+    for dataset in drawing.DS:
+        for seed in (42, 14, 100):
+            edges, y_true, scores, reverse, _ = fixed_pool(build.bundle, dataset, seed, .8)
+            split = build.bundle.arrays(fixed_experiment(build.bundle, dataset, seed, .8)["reference"]["split"])
+            scores.update(popularity(split["train"], edges))
+            keep = ~reverse
+            rows += [dict(dataset=dataset, split_seed=seed, label=method,
+                          auprc_trapezoid=binary_metrics(y_true[keep].astype(int), scores[method][keep])["auprc_trapezoid"])
+                     for method in methods]
+    return pd.DataFrame(rows)
+
 def main_figures(build, completion):
     overview(build)
     env = namespace()
@@ -113,32 +129,10 @@ def main_figures(build, completion):
                 color, marker, ls = STYLES[method]
                 ax.plot(g.index * 100, g["mean"], color=color, marker=marker, ls=ls, ms=3)
                 ax.fill_between(g.index * 100, g["min"], g["max"], color=color, alpha=.08)
-        # Open markers: pooled AUPRC after excluding every pair whose reverse was revealed.
-        from evaluation.metrics import binary_metrics
-        from evaluation.specificity import fixed_pool
-        ax, labels = fig.axes[4], list(env["FIG2_STYLE"])
-        positions = {m: (j - (len(labels) - 1) / 2) * .84 / len(labels) for j, m in enumerate(labels)}
-        for group, dataset in enumerate(env["DS"]):
-            values = {}
-            for seed in (42, 14, 100):
-                edges, y_true, scores, reverse, _ = fixed_pool(build.bundle, dataset, seed, .8)
-                scores = {m: scores[m] for m in ("BEACON", "Topology control", "GNNLink")}
-                keep = ~reverse
-                for method, s in scores.items():
-                    values.setdefault(method, []).append(binary_metrics(y_true[keep].astype(int), s[keep])["auprc_trapezoid"])
-            for method, v in values.items():
-                ax.plot(group + positions[method], np.mean(v), marker="o", ms=3.6, ls="", markerfacecolor="white",
-                        markeredgecolor="#111111", markeredgewidth=.8, zorder=5)
-        for legend in list(fig.legends):
-            legend.remove()
-        handles = [Line2D([0], [0], color=s[0], marker=s[1], ls=s[2], label=m, ms=4) for m, s in env["FIG2_STYLE"].items()]
-        handles.append(Line2D([0], [0], color="#111111", marker="o", ls="", markerfacecolor="white", ms=4,
-                              label="White dot: reverse edges excluded"))
-        fig.legend(handles=drawing.row_major(handles, 5), ncol=5, frameon=False, loc="lower center", bbox_to_anchor=(.5, -.015))
-        save(build, fig, name, "A–E: pooled trapezoid AUPRC; F: all-TF mean AP",
-             "Same four coverage curves and two 80%-prior comparison panels. Adds both prior popularity controls; saved BEACON fit replaces BEACON and topology values.")
+        save(build, fig, name, "A–E: pooled trapezoid AUPRC, E after excluding every test pair whose reverse was revealed; F: all-TF mean AP",
+             "Four coverage curves with GCLink and scRegulate at 80% and two 80%-prior comparison panels. Adds both prior popularity controls; saved BEACON fit replaces BEACON and topology values.")
     env["save"] = save_prior
-    drawing.prior_completion(env['coverage'], env['primary'], env['save'])
+    drawing.prior_completion(env['coverage'], env['primary'], reverse_excluded(build, list(env["FIG2_STYLE"])), env['save'])
     if build.selected in (None, "specificity_regimes"):
         from evaluation.specificity import fixed_pools, external
         fixed, _, null = fixed_pools(build.bundle, null=True)
