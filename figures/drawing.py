@@ -338,7 +338,7 @@ def specificity_regimes(fixed, external, null=None):
     points = ['GCLink', 'scRegulate', 'GENELink', 'scRegNet', 'GRNBoost2', 'GENIE3', 'Inferelator']
     fig, axes = plt.subplots(2, 4, figsize=(7.15, 4.3), layout='constrained', sharex='col', sharey='row')
     low, high = external.revealed_per_regulator.min(), external.revealed_per_regulator.max()
-    for row, (metric, label) in enumerate((('gain', 'Within-regulator AP /\ntarget-only AP'), ('within_ap', 'Within-regulator AP'))):
+    for row, (metric, label) in enumerate((('gain', 'Within-regulator AP /\nconsensus AP'), ('within_ap', 'Within-regulator AP'))):
         for ax, context in zip(axes[row], SHORT):
             part = fixed[fixed.context.eq(context)]
             ax.axvspan(low / 1.12, high * 1.12, color='#E3E3E3', lw=0, zorder=0)
@@ -362,6 +362,7 @@ def specificity_regimes(fixed, external, null=None):
             ax.set_xscale('log'); ax.set_xticks([.3, 1, 3, 10, 30], ['0.3', '1', '3', '10', '30']); ax.minorticks_off()
             if row == 0:
                 ax.set_title(context, fontsize=8)
+                ax.tick_params(axis='x', labelbottom=True)
             else:
                 ax.set_xlabel('Revealed edges per regulator', fontsize=6.8)
         axes[row, 0].set_ylabel(label)
