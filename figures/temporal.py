@@ -47,8 +47,8 @@ def draw(metrics, paired):
         ax.bar(x, g['mean'], width, color=color, hatch=hatch, edgecolor='#555555', linewidth=.3, label=method)
         ax.errorbar(x, g['mean'], yerr=[g['mean'] - g['min'], g['max'] - g['mean']], fmt='none', ecolor='#555555', elinewidth=.5, capsize=1)
     ax.axhline(1, color='#555555', lw=.7, ls='--')
-    ax.set_xticks(range(len(CUTOFFS)), [f'Prior: edges reported by {c}' for c in CUTOFFS])
-    ax.set_ylabel('Pooled AP / chance'); ax.set_title('Recovery of edges reported after the cutoff', loc='left', fontsize=8.2)
+    ax.set_xticks(range(len(CUTOFFS)), [f'Prior: edges discovered by {c}' for c in CUTOFFS])
+    ax.set_ylabel('Pooled AP / chance'); ax.set_title('Recovery of edges discovered after the cutoff', loc='left', fontsize=8.2)
     ax.text(-.06, 1.02, 'A', transform=ax.transAxes, fontsize=10, weight='bold', va='bottom')
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(row_major(handles, 7), row_major(labels, 7), ncol=7, frameon=False, fontsize=6.2, loc='upper center',
@@ -78,7 +78,7 @@ def draw(metrics, paired):
     for side in ax.spines.values():
         side.set_visible(False)
     for k, cutoff in enumerate(CUTOFFS):
-        ax.text(1.5 + 4 * k, -.75, f'Prior: edges reported by {cutoff}', ha='center', va='bottom', fontsize=6.6)
+        ax.text(1.5 + 4 * k, -.75, f'Prior: edges discovered by {cutoff}', ha='center', va='bottom', fontsize=6.6)
     ax.set_title('Mean per-regulator AP, BEACON minus each method', loc='left', fontsize=8.2, pad=14)
     ax.text(-.063, 1.095, 'B', transform=ax.transAxes, fontsize=10, weight='bold', va='bottom')
     ax.text(1, 1.095, 'Bold numbers: 95% interval excludes zero', transform=ax.transAxes, ha='right', va='bottom', fontsize=6.2)
@@ -97,8 +97,8 @@ def concentration_figure(concentration):
                edgecolor='#555555', linewidth=.3, label=name)
     ax.axhline(.1, color='#555555', lw=.7, ls='--')
     ax.set_xticks(range(len(CUTOFFS)), [str(c) for c in CUTOFFS]); ax.set_xlabel('Cutoff year'); ax.set_ylim(0, 1)
-    ax.set_ylabel('Share of later edges')
-    ax.set_title('Later edges on the 10% of regulators\nwith the most prior edges', loc='left', fontsize=8.2)
+    ax.set_ylabel('Share of later discoveries')
+    ax.set_title('Later discoveries on the 10% of regulators\nwith the most prior edges', loc='left', fontsize=8.2)
     ax.legend(frameon=False, fontsize=6, loc='upper center', bbox_to_anchor=(.5, -.2), ncol=4, handlelength=1, columnspacing=.8)
     return fig
 
@@ -115,15 +115,15 @@ def tables(metrics, paired):
                      for col, v in wide.loc[method].items()]
             lines.append(f'{method} & ' + ' & '.join(cells) + ' \\\\')
         return lines
-    head = ' & ' + ' & '.join(f'\\multicolumn{{4}}{{c}}{{Edges reported by {c}}}' for c in CUTOFFS) + ' \\\\'
+    head = ' & ' + ' & '.join(f'\\multicolumn{{4}}{{c}}{{Cutoff year {c}}}' for c in CUTOFFS) + ' \\\\'
     rule = ''.join(f'\\cmidrule(lr){{{2 + 4 * i}-{5 + 4 * i}}}' for i in range(3))
     sub = 'Method & ' + ' & '.join(['K562', 'Rest.', 'Stim.', 'RPE1'] * 3) + ' \\\\'
     later = frame[frame.method.eq('BEACON')].set_index(['cutoff', 'context']).positives.reindex(columns)
-    counts = 'Later edges & ' + ' & '.join(f'{int(v):,}' for v in later) + ' \\\\'
+    counts = 'Positives & ' + ' & '.join(f'{int(v):,}' for v in later) + ' \\\\'
     main = '\n'.join(['\\toprule', head, rule, sub, '\\midrule', counts, '\\midrule', '\\multicolumn{13}{@{}l}{\\textit{Pooled AP}} \\\\',
                       *block('pooled_ap', 4), '\\midrule', '\\multicolumn{13}{@{}l}{\\textit{Mean per-regulator AP}} \\\\', *block('mean_ap', 4), '\\bottomrule'])
     rows = []
-    for variant, name in ((PRIMARY, 'All later edges'), ('supported by a paper citing <= 50 edges', 'Without large-paper-only edges'),
+    for variant, name in ((PRIMARY, 'All positives'), ('supported by a paper citing <= 50 edges', 'Without edges supported only by large papers'),
                           ('two or more later papers', 'Two or more later papers')):
         wide = metrics[metrics.variant.eq(variant)].pivot_table(index=['cutoff', 'context'], columns='method', values='pooled_ap')
         rank = wide[PUBLISHED].rank(axis=1, ascending=False).BEACON

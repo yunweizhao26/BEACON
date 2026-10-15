@@ -239,17 +239,17 @@ def k562_evaluation(fractions, ratios, ratio_errors, relative_ap, dnmt1, expecte
     groups = [f'Top {k}' for k in ks]
     grouped_bars(axes[0, 0], groups, {m: fractions[m] for m in methods}, chance=chance)
     axes[0, 0].set_ylabel('Response-supported fraction')
-    panel(axes[0, 0], 'a', 'Responses among top-ranked targets')
+    panel(axes[0, 0], 'a', 'Responses among top-ranked target genes')
     grouped_bars(axes[0, 1], groups, {m: ratios[m] for m in methods}, errors=ratio_errors, chance=1)
     axes[0, 1].set_ylabel('Observed / expression-matched')
-    panel(axes[0, 1], 'b', 'Enrichment beyond target expression')
+    panel(axes[0, 1], 'b', 'Enrichment beyond target gene expression')
     grouped_bars(axes[1, 0], ['Response', 'Promoter binding', 'Both'], {m: relative_ap[m] for m in methods}, chance=1)
     axes[1, 0].set_ylabel('Mean AP / chance')
-    panel(axes[1, 0], 'c', 'Average precision over full target lists')
+    panel(axes[1, 0], 'c', 'Average precision over full target gene lists')
     grouped_bars(axes[1, 1], ['Response', 'Promoter binding', 'Both'], {m: dnmt1[m] for m in methods}, chance=expected, labels=True)
-    axes[1, 1].set_ylabel('Supported targets in top 100')
+    axes[1, 1].set_ylabel('Supported target genes in top 100')
     axes[1, 1].set_ylim(0, max(max(v) for v in dnmt1.values()) * 1.15)
-    panel(axes[1, 1], 'd', 'DNMT1 top 100 targets')
+    panel(axes[1, 1], 'd', 'DNMT1 top 100 target genes')
     legend_below(fig, methods, ncol=6, y=-.055)
     return fig
 
@@ -268,7 +268,7 @@ def cross_context(tcells, matched, matched_errors, rpe1, trrust, trrust_chance, 
     groups, series = matched
     grouped_bars(ax, groups, series, errors=matched_errors, chance=1)
     ax.set_ylabel('Observed / matched, top 100')
-    panel(ax, 'c', 'Enrichment beyond target expression')
+    panel(ax, 'c', 'Enrichment beyond target gene expression')
     ax = fig.add_subplot(gs[1, 1])
     means, errors = rpe1
     for x, method in enumerate(means):

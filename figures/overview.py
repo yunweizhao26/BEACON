@@ -15,14 +15,14 @@ LEGEND = [(DATA, "Data"), (LEARN, "Representation learning"), (SCORE, "Pair scor
 TOP, BOTTOM, MIDDLE = (4.3, 5.7), (.65, 2.05), (2.55, 3.8)
 EVALUATIONS = [((4.45, 5.7), "Held-out reference edges", "Fixed pools in four BEELINE contexts"),
                ((2.55, 3.8), "K562 assays", "Perturb-seq responses and promoter binding"),
-               ((.65, 1.9), "Primary T cells and RPE1", "Perturb-seq responses and TRRUST targets")]
+               ((.65, 1.9), "Primary T cells and RPE1", "Perturb-seq responses and TRRUST target genes")]
 
 
 def draw():
     plt.rcParams.update({"font.family": "DejaVu Sans", "figure.facecolor": "white", "savefig.facecolor": "white"})
     fig, ax = plt.subplots(figsize=(7.15, 3.0))
     fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
-    ax.set_xlim(0, 16); ax.set_ylim(-.75, 6.85); ax.axis("off")
+    ax.set_xlim(0, 16.3); ax.set_ylim(-.75, 6.85); ax.axis("off")
 
     def box(x0, x1, rows, title, note=None, style=LEARN, stacked=False, title_size=7.4, note_size=6.1, align="center"):
         y0, y1 = rows
@@ -58,16 +58,16 @@ def draw():
     header(.05, "I N P U T S"); header(5.55, "B E A C O N   M O D E L", "center"); header(11.35, "E V A L U A T I O N")
     top, bottom = sum(TOP) / 2, sum(BOTTOM) / 2
 
-    box(.2, 1.9, TOP, "Partial GRN", "recorded edges", DATA, stacked=True)
+    box(.2, 1.9, TOP, "Partial GRN", "known edges", DATA, stacked=True)
     box(.2, 1.9, BOTTOM, "scRNA-seq", "genes × cells", DATA, stacked=True)
-    box(2.3, 4.1, TOP, "Labeled\npairs", "observed edges,\nsampled pairs", DATA, stacked=True)
+    box(2.3, 4.1, TOP, "Labeled\npairs", "revealed edges,\nsampled pairs", DATA, stacked=True)
     box(2.3, 4.1, BOTTOM, "Factor\nanalysis", "gene features")
     box(4.5, 6.6, TOP, "Pair\ndecoder", "trains the encoder")
     box(4.5, 6.6, BOTTOM, "Shared\nencoder", "one vector per gene")
     box(7.0, 8.8, BOTTOM, "GP\nclassifier", r"$\kappa_{\mathrm{reg}}+\kappa_{\mathrm{tgt}}+\kappa_{\mathrm{pair}}$", SCORE)
     box(9.15, 10.8, MIDDLE, "Ranked\nTF → target\ncandidates", style=OUTPUT)
     for rows, title, note in EVALUATIONS:
-        box(11.35, 15.95, rows, title, note, EVALUATE, align="left")
+        box(11.35, 16.25, rows, title, note, EVALUATE, align="left")
 
     block(1.9, top, 2.3); block(4.1, top, 4.5)
     block(1.9, bottom, 2.3); block(4.1, bottom, 4.5); block(6.6, bottom, 7.0)
@@ -89,7 +89,7 @@ def draw():
     to_data = ax.transData.inverted()
     widths = [to_data.transform((t.get_window_extent(renderer).width, 0))[0] - to_data.transform((0, 0))[0] for t in labels]
     total = sum(.45 + w for w in widths) + .7 * (len(widths) - 1)
-    x = 8 - total / 2
+    x = 8.15 - total / 2
     for ((face, edge), _), text, width in zip(LEGEND, labels, widths):
         ax.add_patch(Rectangle((x, -.6), .32, .32, facecolor=face, edgecolor=edge, linewidth=1.0))
         text.set_x(x + .45)
