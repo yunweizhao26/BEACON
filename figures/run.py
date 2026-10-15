@@ -9,6 +9,11 @@ def main():
     p.add_argument("--only",help="Descriptive output stem")
     p.add_argument("--config",type=Path);p.add_argument("--out",type=Path)
     a=p.parse_args();build=Build(a.config,a.out,a.only)
+    if a.kind=="tables" and a.only in ("reciprocal_edges", "specificity_fixed", "specificity_external"):
+        from figures.review_tables import generate
+        generate(build)
+        build.finish()
+        return
     if a.kind=="checks":
         import hashlib
         from figures.checks import run

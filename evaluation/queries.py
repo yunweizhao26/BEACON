@@ -54,18 +54,6 @@ def coverage():
         add('Coverage (pooled AUPRC)', 'first coverage where BEACON > topology control', context, 'coverage', *first)
         add('Coverage (pooled AUPRC)', 'gain 5% to 80%', context, 'auprc_trapezoid', ba[(context, .8)] - ba[(context, .05)], bb[(context, .8)] - bb[(context, .05)])
 
-def ratio_corruption():
-    a, b = both('summary/completion_runs.csv')
-    sel = lambda f: f.query('variant == "beacon" and coverage == .2 and method == "beacon"').groupby(['ratio', 'corruption', 'context']).average_precision.mean()
-    ta, tb = sel(a), sel(b)
-    for key in ta.index:
-        add('Ratio and corruption at 20% (pooled AP)', f'ratio {key[0]:g}, corruption {key[1]:g}', key[2], 'average_precision', ta[key], tb.get(key))
-    for context in ORDER:
-        add('Ratio and corruption at 20% (pooled AP)', 'ratio 20 - ratio 1', context, 'average_precision',
-            ta[(20, 0, context)] - ta[(1, 0, context)], tb[(20, 0, context)] - tb[(1, 0, context)])
-        add('Ratio and corruption at 20% (pooled AP)', 'corruption 20% - none', context, 'average_precision',
-            ta[(5, .2, context)] - ta[(5, 0, context)], tb[(5, .2, context)] - tb[(5, 0, context)])
-
 def concordance():
     a, b = both('completion_summary/hard_challenge_metrics.csv')
     if b is None:

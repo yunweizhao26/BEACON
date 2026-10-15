@@ -209,28 +209,8 @@ def response_tables(build):
 
 
 def specificity(build):
-    from evaluation.specificity import fixed_pools, external
-    fixed = fixed_pools(build.bundle)
-    methods = ["BEACON", "GNNLink", "GCLink", "scRegulate", "RegGAIN", "GENELink", "scRegNet", "GRNBoost2", "GENIE3", "Inferelator", "Topology control"]
-    rows = []
-    for (context, coverage), part in fixed.groupby(["context", "coverage"], sort=False):
-        means = part.groupby("method").gain.mean()
-        cells = ["--" if m not in means else f"{means[m]:.2f}" for m in methods]
-        rows.append([context, f"{coverage * 100:g}", f"{part.revealed_per_regulator.mean():.1f}", *cells])
-    emit(build, "tab:specificity_fixed", ["Context", "Revealed (%)", "Edges per TF", *methods], rows,
-         "within-regulator AP over target-only AP",
-         "Means across three splits; held-out edges whose reverse was revealed are excluded.")
-    frame = external(build.bundle)
-    names = {"k562": "K562", "tcell_resting": "Resting T cells", "tcell_stimulated": "Re-stimulated T cells", "rpe1": "RPE1"}
-    rows = []
-    for context, part in frame.groupby("context", sort=False):
-        part = part.set_index("method")
-        rows.append([names[context], str(int(part.regulators.iloc[0])), f"{part.revealed_per_regulator.iloc[0]:.1f}",
-                     *[f"{part.loc[m, 'consensus_spearman']:.3f}" for m in ("BEACON", "GNNLink", "Random")],
-                     *[f"{part.loc[m, 'residual_ap_over_chance']:.2f}" for m in ("BEACON", "GNNLink", "Random")]])
-    emit(build, "tab:specificity_external", ["Assay", "TFs", "Edges per TF", "BEACON", "GNNLink", "Random", "BEACON", "GNNLink", "Random"], rows,
-         "median Spearman with the consensus ranking; regulator-specific residual AP over chance",
-         "Consensus is the mean target rank across evaluated regulators; the random ranking sets the agreement expected by chance.")
+    from figures.review_tables import generate
+    generate(build)
 
 
 def ablations(build, completion):

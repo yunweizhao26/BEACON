@@ -13,7 +13,10 @@ dynamic = ["dependencies"]
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["beacon*", "experiments*", "evaluation*", "figures*", "preparation*", "data*", "tests*"]
+include = ["beacon*", "comparators*", "experiments*", "evaluation*", "figures*", "preparation*", "data*", "tests*"]
+
+[tool.setuptools.package-data]
+comparators = ["manifest.json"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["dependencies.txt"]}

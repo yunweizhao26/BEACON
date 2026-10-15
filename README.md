@@ -30,9 +30,13 @@ Set `data_root`, `bundle_url` and `bundle_sha256` in [config.toml](config.toml),
 python -m data.download
 ```
 
-The data bundle is archived at Zenodo, [doi:10.5281/zenodo.23108369](https://doi.org/10.5281/zenodo.23108369), and `config.toml` already holds its URL and SHA-256. The bundle is a [plain directory tree](data/README.md) of NPZ, CSV, TSV and JSON files with one top-level manifest. Arrays preserve dtype, values and memory order. See [public sources](data/sources.md), [raw preparation](preparation/README.md) and [comparator configurations](comparators/README.md).
+The Zenodo deposit, [doi:10.5281/zenodo.23108369](https://doi.org/10.5281/zenodo.23108369), is not yet published. The URL and checksum in `config.toml` await the revised bundle; do not treat them as a public reproduction artifact. The bundle is a [plain directory tree](data/README.md) of NPZ, CSV, TSV and JSON files with one top-level manifest. Arrays preserve dtype, values and memory order. See [public sources](data/sources.md), [raw preparation](preparation/README.md) and [comparator training](comparators/README.md).
 
 ## Tables and figures
+
+The revised analyses require the epoch-standard comparator scores and their recomputed plotting records. Repacking the data bundle is separate from this source patch. See [required bundle updates](data/README.md#revised-paper-bundle).
+
+Figures use the lighter paper palette directly. Reverse-edge checks exclude every test pair whose reverse was revealed, including unlabeled pairs. Fixed-pool specificity ranks each regulator's full test pool with average ties, computes a leave-one-out target consensus before exclusion, and evaluates both APs on the retained pairs. Its identical-order simulation band is empirical; unequal target pools do not guarantee a ratio of one. External specificity retains its aggregate definition and adds each regulator's own prior-support strata.
 
 Recompute key numbers and response metrics from saved predictions:
 
@@ -69,7 +73,6 @@ Supplementary figures:
 
 ```bash
 python -m figures.run supplementary --only runtime_scaling --out results/runtime_scaling
-python -m figures.run supplementary --only completion_sensitivity --out results/completion_sensitivity
 python -m figures.run supplementary --only precision_by_evidence_type --out results/precision_by_evidence_type
 python -m figures.run supplementary --only precision_by_dataset --out results/precision_by_dataset
 python -m figures.run supplementary --only score_distribution --out results/score_distribution
@@ -94,6 +97,9 @@ python -m figures.run tables --only tcell_eligibility --out results/tcell_eligib
 python -m figures.run sensitivity --only factor_components --out results/factor_components
 python -m figures.run sensitivity --only input_features --out results/input_features
 python -m figures.run checks --out results/review_checks
+python -m figures.run tables --only reciprocal_edges --out results/table_s8
+python -m figures.run tables --only specificity_fixed --out results/table_s15
+python -m figures.run tables --only specificity_external --out results/table_s16
 ```
 
 Factor sensitivity retains the prespecified 64-component setting.
@@ -106,6 +112,8 @@ Small CPU checks:
 python -m tests.test_bundle
 python -m tests.test_equivalence --unit
 python -m tests.test_evaluation --unit
+python -m tests.test_specificity
+python -m tests.test_comparators
 ```
 
 On L40S with the pinned environment and thread settings above:
@@ -115,7 +123,7 @@ python -m tests.test_equivalence --out results/equivalence
 python -m tests.test_evaluation --out results/evaluation_test
 ```
 
-The identity test checks 16 prediction cases bitwise and inducing metrics separately. The evaluation test checks 1,176 in-scope key numbers at absolute tolerance 1e-9. Both tests pass on NVIDIA L40S GPUs with the pinned environment. Optional [Slurm wrappers](tests/equivalence.sbatch) accept a configurable Python and require your account and partition.
+The identity test checks 16 prediction cases bitwise and inducing metrics separately. The evaluation test checks 1,176 in-scope key numbers at absolute tolerance 1e-9. The historical L40S test results predate this patch; the revised source and repacked bundle require fresh validation. Optional [Slurm wrappers](tests/equivalence.sbatch) accept a configurable Python and require your account and partition.
 
 ## License
 

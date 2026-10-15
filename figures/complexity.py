@@ -19,7 +19,7 @@ METHOD_ORDER = ["BEACON", "GNNLINK", "Inferelator 3.0"]
 
 METHOD_LABELS = {"BEACON": "BEACON", "GNNLINK": "GNNLink", "Inferelator 3.0": "Inferelator 3.0"}
 
-COLORS = {"BEACON": "#222222", "GNNLINK": "#0072B2", "Inferelator 3.0": "#D55E00"}
+COLORS = {"BEACON": "#1B9E77", "GNNLINK": "#E8803A", "Inferelator 3.0": "#E06666"}
 
 def load_source(path: Path) -> pd.DataFrame:
     if not path.exists():

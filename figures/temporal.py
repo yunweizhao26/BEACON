@@ -43,8 +43,8 @@ def draw(metrics, paired, concentration):
         g = frame[frame.method.eq(method)].groupby('cutoff').fold.agg(['mean', 'min', 'max']).reindex(CUTOFFS)
         x = np.arange(len(CUTOFFS)) + (j - (len(methods) - 1) / 2) * width
         color, _, _, hatch = style(method)
-        ax.bar(x, g['mean'], width, color=color, hatch=hatch, edgecolor='#333333', linewidth=.3, label=method)
-        ax.errorbar(x, g['mean'], yerr=[g['mean'] - g['min'], g['max'] - g['mean']], fmt='none', ecolor='#222222', elinewidth=.5, capsize=1)
+        ax.bar(x, g['mean'], width, color=color, hatch=hatch, edgecolor='#555555', linewidth=.3, label=method)
+        ax.errorbar(x, g['mean'], yerr=[g['mean'] - g['min'], g['max'] - g['mean']], fmt='none', ecolor='#555555', elinewidth=.5, capsize=1)
     ax.axhline(1, color='#555555', lw=.7, ls='--')
     ax.set_xticks(range(len(CUTOFFS)), [f'Prior: edges reported by {c}' for c in CUTOFFS])
     ax.set_ylabel('Pooled AP / chance'); ax.set_title('Recovery of edges reported after the cutoff', loc='left', fontsize=8.2)
@@ -55,7 +55,7 @@ def draw(metrics, paired, concentration):
 
     ax = fig.add_subplot(grid[1, 0])
     counts = outcome(paired, PRIMARY, PUBLISHED[1:])
-    colors = {'higher': '#0B6E4F', 'tie': '#C9C9C9', 'lower': '#C0480A'}
+    colors = {'higher': '#1B9E77', 'tie': '#DDDDDD', 'lower': '#E8803A'}
     names = {'higher': 'BEACON higher', 'tie': 'No difference detected', 'lower': 'BEACON lower'}
     left = np.zeros(len(counts))
     for result in ('higher', 'tie', 'lower'):
@@ -68,12 +68,12 @@ def draw(metrics, paired, concentration):
     ax.legend(frameon=False, fontsize=6, loc='upper center', bbox_to_anchor=(.42, -.17), ncol=3, handlelength=1, columnspacing=.8)
 
     ax = fig.add_subplot(grid[1, 1])
-    shades = dict(zip(CONTEXTS, ['#3B3B3B', '#6F6F6F', '#A0A0A0', '#CFCFCF']))
+    shades = dict(zip(CONTEXTS, ['#707070', '#969696', '#B8B8B8', '#DEDEDE']))
     width = .8 / len(CONTEXTS)
     for k, (context, name) in enumerate(CONTEXTS.items()):
         g = concentration[concentration.context.eq(context)].set_index('cutoff').reindex(CUTOFFS)
         ax.bar(np.arange(len(CUTOFFS)) + (k - 1.5) * width, g.top10pct_regulator_share, width, color=shades[context],
-               edgecolor='#333333', linewidth=.3, label=name)
+               edgecolor='#555555', linewidth=.3, label=name)
     ax.axhline(.1, color='#555555', lw=.7, ls='--')
     ax.set_xticks(range(len(CUTOFFS)), [str(c) for c in CUTOFFS]); ax.set_xlabel('Cutoff year'); ax.set_ylim(0, 1)
     ax.set_ylabel('Share of later edges')

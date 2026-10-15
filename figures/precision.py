@@ -34,23 +34,19 @@ NETWORK_TITLE = {
     "STRING": "STRING associations",
 }
 
-PANEL_COLORS = {"TF+500": "#0072B2", "TF+1000": "#D55E00"}
+PANEL_COLORS = {"TF+500": "#5B9BD5", "TF+1000": "#E8803A"}
 
 CELL_COLORS = {
-    "hESC": "#0072B2",
-    "hHEP": "#D55E00",
-    "mDC": "#009E73",
-    "mESC": "#CC79A7",
-    "mHSC E": "#E69F00",
-    "mHSC GM": "#56B4E9",
-    "mHSC L": "#4D4D4D",
+    "hESC": "#5B9BD5", "hHEP": "#E8803A", "mDC": "#1B9E77",
+    "mESC": "#D794BE", "mHSC E": "#E8B94A", "mHSC GM": "#80C6ED",
+    "mHSC L": "#858585",
 }
 
 PANEL_STYLES = {"TF+500": "-", "TF+1000": (0, (4, 2))}
 
-UNLABELED_COLOR = "#0072B2"
+UNLABELED_COLOR = "#5B9BD5"
 
-POSITIVE_COLOR = "#D55E00"
+POSITIVE_COLOR = "#E8803A"
 
 def set_publication_style() -> None:
     plt.rcParams.update(
@@ -256,8 +252,8 @@ def plot_distribution(ax: plt.Axes, data: pd.DataFrame, title: str | None = None
         linewidth=0.9,
         alpha=0.9,
     )
-    ax.text(neg_mean, 0.72, f"mean {neg_mean:.3f}", color=UNLABELED_COLOR, ha="left", va="top", rotation=90, transform=ax.get_xaxis_transform(), fontsize=6.4)
-    ax.text(pos_mean, 0.72, f"mean {pos_mean:.3f}", color=POSITIVE_COLOR, ha="right", va="top", rotation=90, transform=ax.get_xaxis_transform(), fontsize=6.4)
+    ax.text(neg_mean, 0.72, f"mean {neg_mean:.3f}", color="#0072B2", ha="left", va="top", rotation=90, transform=ax.get_xaxis_transform(), fontsize=6.4)
+    ax.text(pos_mean, 0.72, f"mean {pos_mean:.3f}", color="#D55E00", ha="right", va="top", rotation=90, transform=ax.get_xaxis_transform(), fontsize=6.4)
     ax.set_xlim(0, 1)
     ax.set_xlabel("BEACON score")
     ax.set_ylabel("Density")

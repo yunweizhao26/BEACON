@@ -17,7 +17,7 @@ def median_between(P, rows_keep):
     C=R@R.T/R.shape[1];iu=np.triu_indices(len(C),1)
     return float(np.median(C[iu])),float(np.quantile(C[iu],.05)),len(C)
 
-def run(bundle,out):
+def reciprocal(bundle):
     rows=[]
     for ds,name in CONTEXT.items():
         for seed in (42,14,100):
@@ -29,10 +29,14 @@ def run(bundle,out):
             indeg=np.bincount(prior[:,1],minlength=len(z["genes"]));rev=np.array([(b,a) in pset for a,b in edges])
             topo=p["degree_logistic"];t01=(topo-topo.min())/(topo.max()-topo.min()+1e-12)
             scores={"BEACON":p["beacon"],"GNNLink":g["gnnlink"][idx],"Topology control":topo,"Prior target in-degree":indeg[edges[:,1]].astype(float),"Reverse-edge rule":rev+.5*t01}
-            keep=~(y&rev);tfs=z["tf_indices"]
+            keep=~rev;tfs=z["tf_indices"]
             for m,s in scores.items():
                 rows.append(dict(context=name,split=seed,method=m,share_reverse=float(rev[y].mean()),ap_all=ap(y,s),ap_without=ap(y[keep],s[keep]),alltf_all=all_tf_ap(edges,y,s,tfs),alltf_without=all_tf_ap(edges[keep],y[keep],s[keep],tfs)))
-    pd.DataFrame(rows).to_csv(out/"reciprocal_edges.csv",index=False)
+    return pd.DataFrame(rows)
+
+
+def run(bundle,out):
+    reciprocal(bundle).to_csv(out/"reciprocal_edges.csv",index=False)
     rows=[]
     for context in ("k562","tcell_resting","tcell_stimulated"):
         e,=[e for e in bundle.manifest["experiments"] if e["suite"]=="external" and e["condition"]["context"]==context and e["condition"]["control"]=="beacon"]

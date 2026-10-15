@@ -34,12 +34,12 @@ ORDER = ['BEACON', 'GNNLink', 'GCLink', 'scRegulate', 'RegGAIN', 'GENELink', 'sc
          'Topology control', 'Prior target in-degree', 'Prior regulator out-degree',
          'Target expression', 'Expression correlation', 'Target detection']
 STYLE = {
-    'BEACON': ('#0B6E4F', 'o', '-', ''), 'GNNLink': ('#C0480A', 's', '--', ''), 'GCLink': ('#4D7F17', '^', '-.', ''),
-    'scRegulate': ('#A67C00', 'D', ':', ''), 'RegGAIN': ('#5A4E9B', 'v', (0, (4, 2)), ''), 'GENELink': ('#B5155E', 'P', '-', ''),
-    'scRegNet': ('#159AA8', '8', (0, (3, 1, 1, 1)), ''), 'GRNBoost2': ('#7F4F24', 'h', '-', ''), 'GENIE3': ('#1F5F99', '*', '-', ''), 'Inferelator': ('#B22222', 'd', '-', ''),
-    'Topology control': ('#2B2B2B', 'X', (0, (1.5, 1.2)), ''), 'Prior target in-degree': ('#555555', '>', '-.', '///'),
-    'Prior regulator out-degree': ('#7A7A7A', '<', ':', '\\\\'), 'Target expression': ('#8F8F8F', 'p', '-', 'xx'),
-    'Expression correlation': ('#A8A8A8', 'H', '-', '...'), 'Target detection': ('#6E6E6E', 'p', '-', '++')}
+    'BEACON': ('#1B9E77', 'o', '-', ''), 'GNNLink': ('#E8803A', 's', '--', ''), 'GCLink': ('#8CBF4E', '^', '-.', ''),
+    'scRegulate': ('#E0B43C', 'D', ':', ''), 'RegGAIN': ('#8E83C9', 'v', (0, (4, 2)), ''), 'GENELink': ('#DE6A9C', 'P', '-', ''),
+    'scRegNet': ('#5CC5D0', '8', (0, (3, 1, 1, 1)), ''), 'GRNBoost2': ('#B08A62', 'h', '-', ''), 'GENIE3': ('#5B9BD5', '*', '-', ''), 'Inferelator': ('#E06666', 'd', '-', ''),
+    'Topology control': ('#5F5F5F', 'X', (0, (1.5, 1.2)), ''), 'Prior target in-degree': ('#858585', '>', '-.', '///'),
+    'Prior regulator out-degree': ('#A5A5A5', '<', ':', '\\\\'), 'Target expression': ('#BDBDBD', 'p', '-', 'xx'),
+    'Expression correlation': ('#D2D2D2', 'H', '-', '...'), 'Target detection': ('#969696', 'p', '-', '++')}
 
 # Published names of the baselines. Data keys keep the internal names, and relabel() renames figure text at save time.
 DISPLAY = {'Topology control': 'Degree baseline', 'Degree logistic': 'Degree baseline',
@@ -204,9 +204,9 @@ def grouped_bars(ax, groups, series, errors=None, chance=None, labels=False, wid
     for j, (method, values) in enumerate(series.items()):
         color, hatch = EVAL_STYLE[method]
         x = np.arange(len(groups)) + (j - (n - 1) / 2) * width / n
-        bars = ax.bar(x, values, width / n * .9, color=color, hatch=hatch, edgecolor='#222222', linewidth=.35, label=method)
+        bars = ax.bar(x, values, width / n * .9, color=color, hatch=hatch, edgecolor='#555555', linewidth=.35, label=method)
         if errors is not None and method in errors:
-            ax.errorbar(x, values, yerr=errors[method], fmt='none', ecolor='#222222', elinewidth=.55, capsize=1.1)
+            ax.errorbar(x, values, yerr=errors[method], fmt='none', ecolor='#555555', elinewidth=.55, capsize=1.1)
         if labels:
             ax.bar_label(bars, fmt='%g', fontsize=4.8, padding=1)
     ax.set_xticks(range(len(groups)), groups)
@@ -218,7 +218,7 @@ def grouped_bars(ax, groups, series, errors=None, chance=None, labels=False, wid
 
 
 def legend_below(fig, methods, ncol, y):
-    handles = row_major([Patch(facecolor=EVAL_STYLE[m][0], hatch=EVAL_STYLE[m][1], edgecolor='#222222', linewidth=.35, label=m) for m in ordered(methods)], ncol)
+    handles = row_major([Patch(facecolor=EVAL_STYLE[m][0], hatch=EVAL_STYLE[m][1], edgecolor='#555555', linewidth=.35, label=m) for m in ordered(methods)], ncol)
     fig.legend(handles=handles, ncol=ncol, frameon=False, loc='lower center', bbox_to_anchor=(.5, y))
 
 
@@ -262,8 +262,8 @@ def cross_context(tcells, matched, matched_errors, rpe1, trrust, trrust_chance, 
     means, errors = rpe1
     for x, method in enumerate(means):
         color, hatch = EVAL_STYLE[method]
-        ax.bar(x, means[method], .7, color=color, hatch=hatch, edgecolor='#222222', linewidth=.35)
-        ax.errorbar(x, means[method], yerr=np.array(errors[method])[:, None], fmt='none', ecolor='#222222', elinewidth=.55, capsize=1.5)
+        ax.bar(x, means[method], .7, color=color, hatch=hatch, edgecolor='#555555', linewidth=.35)
+        ax.errorbar(x, means[method], yerr=np.array(errors[method])[:, None], fmt='none', ecolor='#555555', elinewidth=.55, capsize=1.5)
     ax.set_xticks(range(len(means)), list(means), rotation=30, ha='right', rotation_mode='anchor', fontsize=6.2)
     ax.tick_params(axis='x', length=0)
     ax.set_ylabel('Mean top-100 response (control SD)')
@@ -290,10 +290,10 @@ def runtime_scaling(scaling, save):
          'Scored test pairs', 'Time outside model fitting (s)')]:
         x = scaling[xcol].to_numpy(float)
         y = scaling[ycol].to_numpy(float)
-        ax.scatter(x, y, s=16, facecolors='none', edgecolors='#222222', linewidths=.55)
+        ax.scatter(x, y, s=16, facecolors='none', edgecolors='#5F5F5F', linewidths=.55)
         coef = np.polyfit(np.log10(x), np.log10(y), 1)
         guide_x = np.geomspace(x.min(), x.max(), 100)
-        ax.plot(guide_x, 10 ** np.polyval(coef, np.log10(guide_x)), color='#777777',
+        ax.plot(guide_x, 10 ** np.polyval(coef, np.log10(guide_x)), color='#969696',
                 linestyle='--', linewidth=.9, label=f'log-log slope {coef[0]:.2f}')
         ax.legend(frameon=False, loc='lower right')
         # The time outside fitting varies within 10-20 s, so panel b uses a linear axis from zero.
@@ -307,31 +307,15 @@ def runtime_scaling(scaling, save):
     save(fig, 'runtime_scaling')
 
 
-def completion_sensitivity(h, match, grid, COLORS, NAMES, contextcolors, panel, save):
-    fig,axes=plt.subplots(2,2,figsize=(7.2,5.6),layout='constrained')
-    ax=axes[0,0]
-    for j,method in enumerate(['beacon','degree_logistic','gnnlink','reggain']):
-     p=h[h.method==method].groupby('dataset').pair_concordance.mean().reindex(DS);ax.plot(np.arange(4)+(j-1.5)*.1,p,'o',color=COLORS[NAMES[method]],label=NAMES[method],ms=4)
-    ax.axhline(.5,color='black',ls=':',lw=.8);ax.set_xticks(range(4),SHORT,rotation=25,ha='right');ax.set_ylim(.45,.85);ax.set_ylabel('Within-pair concordance');ax.legend(frameon=False,fontsize=6,ncol=2);panel(ax,'a','Same-TF matched targets')
-    ax=axes[0,1];m=match.groupby('dataset').fraction_matched.agg(['mean','min','max']).reindex(DS);ax.bar(range(4),m['mean'],color=contextcolors);ax.errorbar(range(4),m['mean'],yerr=np.vstack([m['mean']-m['min'],m['max']-m['mean']]),fmt='none',color='black',lw=.7,capsize=2);ax.set_xticks(range(4),SHORT,rotation=25,ha='right');ax.set_ylim(0,1);ax.set_ylabel('Fraction of positives matched');panel(ax,'b','Coverage of the challenge')
-    for ax,variable,title,letter in [(axes[1,0],'corruption','Corrupted prior at 20% coverage','c'),(axes[1,1],'ratio','Training unlabeled ratio at 20% coverage','d')]:
-     for d,label,color in zip(DS,SHORT,contextcolors):
-      p=grid[(grid.dataset_id==d)&(grid.coverage==.2)&(grid.control=='beacon')&(grid.method=='beacon')]
-      p=p[p.ratio==5] if variable=='corruption' else p[p.corruption==0]
-      g=p.groupby(variable).average_precision.agg(['mean','min','max']);x=g.index.to_numpy()*(100 if variable=='corruption' else 1);ax.plot(x,g['mean'],color=color,marker='o',ms=3,label=label);ax.fill_between(x,g['min'],g['max'],color=color,alpha=.1)
-     ax.set_xlabel('Prior replacement (%)' if variable=='corruption' else 'Unlabeled pairs per positive');ax.set_ylabel('Pooled AP');panel(ax,letter,title)
-    axes[1,0].legend(frameon=False,fontsize=6,ncol=2);save(fig,'completion_sensitivity')
-
-
 def shortcut(comparison, audit):
     plt.rcParams.update({'font.size':10,'axes.spines.top':False,'axes.spines.right':False,'pdf.fonttype':42,'svg.fonttype':'none'})
     fig,axes=plt.subplots(1,3,figsize=(11.8,3.8))
-    colors={'STRING':'#0072B2','Non-Specific':'#D55E00','Specific':'#009E73','Lofgof':'#CC79A7'}
+    colors={'STRING':'#5B9BD5','Non-Specific':'#E8803A','Specific':'#1B9E77','Lofgof':'#D794BE'}
     for ax,metric,title in zip(axes[:2],['auprc_trapezoid','macro_auroc'],['a  Sampled-pool AUPRC','b  Within-regulator AUROC']):
         for family,color in colors.items():
             mask=comparison.family.eq(family)
             ax.scatter(comparison.loc[mask,f'beacon_{metric}'],comparison.loc[mask,f'degree_{metric}'],label=family,s=27,color=color,alpha=.85)
-        ax.plot([0,1],[0,1],color='.5',lw=.9,ls='--')
+        ax.plot([0,1],[0,1],color='#969696',lw=.9,ls='--')
         ax.set(xlim=(.4,1.01),ylim=(.4,1.01),xlabel='BEACON',ylabel='Training-degree logistic',title=title)
         ax.set_aspect('equal')
     axes[0].legend(fontsize=8,loc='lower right',frameon=False)
@@ -346,10 +330,10 @@ def shortcut(comparison, audit):
     return fig, axes
 
 
-def specificity_regimes(fixed, external):
+def specificity_regimes(fixed, external, null=None):
     """Regulator-specific gain (top) and within-regulator AP (bottom) against revealed edges per regulator in each fixed pool.
     Lines join the coverage levels of methods fitted at every coverage; markers show methods run at 80% coverage. The band
-    marks the perturbation-assay priors."""
+    marks the perturbation-assay priors; horizontal bands show the empirical identical-order range."""
     curves = ['RegGAIN', 'Topology control', 'GNNLink', 'BEACON']
     points = ['GCLink', 'scRegulate', 'GENELink', 'scRegNet', 'GRNBoost2', 'GENIE3', 'Inferelator']
     fig, axes = plt.subplots(2, 4, figsize=(7.15, 4.3), layout='constrained', sharex='col', sharey='row')
@@ -387,4 +371,12 @@ def specificity_regimes(fixed, external):
     handles = [Line2D([], [], color=STYLE[m][0], ls=STYLE[m][2] if m in curves else '', marker=STYLE[m][1], ms=3.2,
                       mfc=STYLE[m][0] if m in curves else 'white', label=m) for m in order]
     fig.legend(handles=row_major(handles, 6), loc='outside lower center', ncol=6, frameon=False, fontsize=6.2, handlelength=1.8, columnspacing=1.0)
+    if null is not None:
+        envelope = null.groupby('context').gain.agg(['min', 'max'])
+        for ax, context in zip(axes[0], SHORT):
+            row = envelope.loc[context]
+            ax.axhspan(row['min'], row['max'], color='#A7BBD0', alpha=.22, lw=0, zorder=.5)
+        # Preserve the paper's axis limits, extending the upper gain limit if needed.
+        axes[0, 0].set_ylim(.14859475830926788, max(3.372260473675663, axes[0, 0].get_ylim()[1]))
+        axes[1, 0].set_ylim(-.017994050656099752, .8226648721247631)
     return fig

@@ -113,7 +113,7 @@ def main_figures(build, completion):
                 color, marker, ls = STYLES[method]
                 ax.plot(g.index * 100, g["mean"], color=color, marker=marker, ls=ls, ms=3)
                 ax.fill_between(g.index * 100, g["min"], g["max"], color=color, alpha=.08)
-        # Open markers: pooled AUPRC after excluding held-out edges whose reverse was revealed.
+        # Open markers: pooled AUPRC after excluding every pair whose reverse was revealed.
         from evaluation.metrics import binary_metrics
         from evaluation.specificity import fixed_pool
         ax, labels = fig.axes[4], list(env["FIG2_STYLE"])
@@ -123,7 +123,7 @@ def main_figures(build, completion):
             for seed in (42, 14, 100):
                 edges, y_true, scores, reverse, _ = fixed_pool(build.bundle, dataset, seed, .8)
                 scores = {m: scores[m] for m in ("BEACON", "Topology control", "GNNLink")}
-                keep = ~(y_true & reverse)
+                keep = ~reverse
                 for method, s in scores.items():
                     values.setdefault(method, []).append(binary_metrics(y_true[keep].astype(int), s[keep])["auprc_trapezoid"])
             for method, v in values.items():
@@ -141,8 +141,10 @@ def main_figures(build, completion):
     drawing.prior_completion(env['coverage'], env['primary'], env['save'])
     if build.selected in (None, "specificity_regimes"):
         from evaluation.specificity import fixed_pools, external
-        save(build, drawing.specificity_regimes(fixed_pools(build.bundle), external(build.bundle)), "specificity_regimes",
-             "within-regulator AP over target-only AP", "Fixed-pool means and split ranges; band spans the perturbation-assay priors.")
+        fixed, _, null = fixed_pools(build.bundle, null=True)
+        save(build, drawing.specificity_regimes(fixed, external(build.bundle), null), "specificity_regimes",
+             "within-regulator AP over leave-one-out percentile-consensus AP",
+             "Fixed-pool means and split ranges after symmetric reverse exclusion; vertical band spans perturbation-assay priors; horizontal bands show identical-order simulations.")
 
     response, comparisons, binding, ra, ba = assays(build)
     summary, controls = matched_results(build)
@@ -238,22 +240,6 @@ def cross_context(build, summary, controls):
          "Primary T-cell, RPE1 and TRRUST endpoints with the target-expression control; 95% regulator-bootstrap intervals in C and D.")
 
 
-def matched_target_panel(ax, challenge, datasets):
-    labels = ["BEACON", "Topology control", "GNNLink", "RegGAIN"]
-    lines = {line.get_label(): line for line in ax.lines if line.get_label() in labels}
-    if set(lines) != set(labels):
-        raise ValueError("Matched-target method artists changed")
-    values = challenge[challenge.method.eq(POP[0])].groupby("dataset").pair_concordance.mean().reindex(datasets)
-    if values.isna().any():
-        raise ValueError("Missing target in-degree matched-pair results")
-    lines[POP[0]], = ax.plot([], [], marker=STYLES[POP[0]][1], ls="", color=STYLES[POP[0]][0], label=POP[0], ms=4)
-    lines[POP[0]].set_ydata(values)
-    labels.append(POP[0])
-    for j, label in enumerate(labels):
-        lines[label].set_xdata(np.arange(len(datasets)) + (j - (len(labels) - 1) / 2) * .1)
-    ax.set_ylim(.45, .95)
-    ax.legend(frameon=False, fontsize=5, ncol=2)
-
 def sampled_presentation(fig, path):
     """Override default label placement only; leave curves and scores untouched."""
     for text in fig.findobj(matplotlib.text.Text):
@@ -271,6 +257,10 @@ def sampled_presentation(fig, path):
         fig.subplots_adjust(bottom=.22)
 
 def heatmaps(build, source):
+    from matplotlib.colors import ListedColormap
+    rgba = sns.color_palette("rocket", as_cmap=True)(np.linspace(0, 1, 256))
+    rgba[:, :3] = .84 * rgba[:, :3] + .16
+    light_cmap = ListedColormap(rgba, name="rocket_light_16pct_white")
     methods = ["BEACON", "GNNLINK", "GENELINK", "Inferelator 3.0", "GRNBoost2", "GENIE3", *POP]
     cells = ["mESC", "hESC", "hHEP", "mDC", "mHSC-E", "mHSC-GM", "mHSC-L"]
     rows = [(family, cell) for family in ("STRING", "Non-Specific", "LOF/GOF", "Specific")
@@ -283,6 +273,8 @@ def heatmaps(build, source):
         fig, ax = plt.subplots(figsize=(12.5, 9.2))
         sns.heatmap(values, cmap="rocket", vmin=40, vmax=100, annot=True, fmt=".2f", annot_kws={"size": 6},
                     linewidths=.2, linecolor="#888888", cbar_kws={"label": "AUROC (%)" if name == "auroc" else "Trapezoid AUPRC (%)"}, ax=ax)
+        # Preserve the annotation colors selected with the original rocket map.
+        ax.collections[0].set_cmap(light_cmap)
         names = [{"GNNLINK": "GNNLink", "GENELINK": "GENELink"}.get(m, m).replace("Prior target in-degree", "Prior target\nin-degree").replace("Prior regulator out-degree", "Prior regulator\nout-degree") for m in methods] * 2
         ax.set(xticklabels=names, yticklabels=[r[1] for r in rows], xlabel="", ylabel="")
         ax.xaxis.tick_top()
@@ -304,7 +296,7 @@ def shortcut(build, sampled):
     comparison = build.csv("sampled_pair_summary/paired_comparison.csv")
     audit = build.csv("split_counts")
     fig, axes = drawing.shortcut(comparison, audit)
-    controls = {POP[0]: ("#555555", "^"), POP[1]: ("#999999", "s")}
+    controls = {POP[0]: ("#858585", "^"), POP[1]: ("#A5A5A5", "s")}
     for method, (color, marker) in controls.items():
         pop = sampled[sampled.method.eq(method)].set_index("dataset_id")
         axes[0].scatter(comparison.beacon_auprc_trapezoid, pop.loc[comparison.dataset_id, "auprc_trapezoid"],
@@ -334,7 +326,7 @@ def shortcut(build, sampled):
         ax.set_ylim(np.floor(lowest * 10) / 10, ax.get_ylim()[1])
     handles, labels = axes[0].get_legend_handles_labels()
     labels = ["LOF/GOF" if label == "Lofgof" else label for label in labels]
-    handles.append(Line2D([], [], marker="o", ls="", color="#555555", markerfacecolor="#555555"))
+    handles.append(Line2D([], [], marker="o", ls="", color="#5F5F5F", markerfacecolor="#5F5F5F"))
     labels.append("Topology control (filled circles)")
     axes[0].legend(handles, labels, fontsize=5, loc="upper left", frameon=False)
     save(build, fig, "benchmark_shortcut_audit", "A/C: pooled trapezoid AUPRC; B: within-source AUROC",
@@ -359,20 +351,6 @@ def supplementary(build, metrics, completion):
              "GP timer covers the refit.")
     env["save"] = save_runtime
     drawing.runtime_scaling(env['scaling'], env['save'])
-    env.update(h=build.csv("completion_summary/hard_challenge_with_popularity.csv"),
-               match=build.csv("completion_summary/hard_challenge_coverage.csv"),
-               grid=completion.query('variant == "beacon"').assign(control="beacon"),
-               COLORS={m: drawing.STYLE[m][0] for m in ("BEACON", "Topology control", "GNNLink", "RegGAIN")},
-               NAMES={"beacon": "BEACON", "degree_logistic": "Topology control", "gnnlink": "GNNLink", "reggain": "RegGAIN"},
-               contextcolors=['#14678a', '#b96a2b', '#6b4c9a', '#56883c'], panel=env["label_panel"])
-    def save_sensitivity(fig, name):
-        matched_target_panel(fig.axes[0], env["h"], env["DS"])
-        save(build, fig, name, "A: pair concordance; B: matched fraction; C–D: pooled AP (sensitivity-panel definition)",
-             "Four panels. Adds prior target in-degree to matched-target comparison; "
-             "regulator out-degree is omitted because it is constant within a regulator. "
-             "Marker groups are centered on each context. Coverage fractions are unchanged protocol counts.")
-    env["save"] = save_sensitivity
-    drawing.completion_sensitivity(*[env[k] for k in ('h','match','grid','COLORS','NAMES','contextcolors','panel','save')])
     sampled_figures(build, metrics)
 
 def sampled_figures(build, metrics):
@@ -419,7 +397,7 @@ def sampled_figures(build, metrics):
     heatmaps(build,adapted)
     complexity.METHOD_ORDER += list(POP)
     complexity.METHOD_LABELS.update({m:m for m in POP})
-    control_styles = {POP[0]: ("#009E73", "^"), POP[1]: ("#CC79A7", "s")}
+    control_styles = {POP[0]: ("#858585", "^"), POP[1]: ("#A5A5A5", "s")}
     complexity.COLORS.update({m: style[0] for m, style in control_styles.items()})
     original_panel = complexity.plot_panel
     def plot_complexity_panel(ax, *args):

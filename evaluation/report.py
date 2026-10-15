@@ -206,7 +206,7 @@ def main():
     tables=replay(bundle)
     queries.TABLES=tables
     queries.rows=[]
-    for name in ("primary","coverage","ratio_corruption","concordance","calibration","sergio","stability","expression_controls","resources"):
+    for name in ("primary","coverage","concordance","calibration","sergio","stability","expression_controls","resources"):
         getattr(queries,name)()
     comparator_queries(tables)
     sampled_queries(bundle,tables)
