@@ -1,13 +1,14 @@
 """Temporal completion: recovery of regulatory edges first reported after the prior's cutoff year.
 
 Reads the tables written by ``python -m evaluation.temporal`` (``metrics.csv``, ``paired.csv`` and
-``concentration.csv``) and writes the main-text figure and two supplementary tables.
+``concentration.csv``) and writes the two main-text figures and two supplementary tables.
 """
 import argparse
 from pathlib import Path
 import numpy as np
 import pandas as pd
 from figures.drawing import plt, Line2D, Patch, STYLE, relabel, row_major
+from matplotlib.colors import LinearSegmentedColormap
 
 PUBLISHED = ['BEACON', 'GNNLink', 'GCLink', 'scRegulate', 'RegGAIN', 'GENELink', 'scRegNet', 'GRNBoost2', 'GENIE3', 'Inferelator']
 BASELINES = ['Expression correlation', 'Degree baseline', 'Target popularity']
@@ -32,9 +33,9 @@ def outcome(paired, variant, comparators):
     return q.groupby('comparator').result.value_counts().unstack(fill_value=0).reindex(index=comparators, columns=['higher', 'tie', 'lower'], fill_value=0)
 
 
-def draw(metrics, paired, concentration):
-    fig = plt.figure(figsize=(7.15, 5.6), layout='constrained')
-    grid = fig.add_gridspec(2, 2, height_ratios=[1.2, 1], width_ratios=[1.15, 1])
+def draw(metrics, paired):
+    fig = plt.figure(figsize=(7.15, 5.9), layout='constrained')
+    grid = fig.add_gridspec(2, 2, height_ratios=[1.15, 1], width_ratios=[1, .018])
     ax = fig.add_subplot(grid[0, :])
     frame = metrics[metrics.variant.eq(PRIMARY)].assign(fold=lambda d: d.pooled_ap / d.prevalence)
     methods = PUBLISHED + BASELINES
@@ -53,21 +54,38 @@ def draw(metrics, paired, concentration):
     ax.legend(row_major(handles, 7), row_major(labels, 7), ncol=7, frameon=False, fontsize=6.2, loc='upper center',
               bbox_to_anchor=(.5, -.1), handlelength=1.4, columnspacing=.9)
 
+    # B: per-setting difference in mean per-regulator AP with its paired regulator-bootstrap interval.
     ax = fig.add_subplot(grid[1, 0])
-    counts = outcome(paired, PRIMARY, PUBLISHED[1:])
-    colors = {'higher': '#1B9E77', 'tie': '#DDDDDD', 'lower': '#E8803A'}
-    names = {'higher': 'BEACON higher', 'tie': 'No difference detected', 'lower': 'BEACON lower'}
-    left = np.zeros(len(counts))
-    for result in ('higher', 'tie', 'lower'):
-        ax.barh(range(len(counts)), counts[result], left=left, color=colors[result], edgecolor='white', linewidth=.4, label=names[result])
-        left += counts[result].to_numpy()
-    ax.set_yticks(range(len(counts)), counts.index); ax.invert_yaxis()
-    ax.set_xlabel('Settings (of 12)'); ax.set_xlim(0, 12)
-    ax.set_title('Per-regulator AP, BEACON vs. each method', loc='left', fontsize=8.2)
-    ax.text(-.38, 1.02, 'B', transform=ax.transAxes, fontsize=10, weight='bold', va='bottom')
-    ax.legend(frameon=False, fontsize=6, loc='upper center', bbox_to_anchor=(.42, -.17), ncol=3, handlelength=1, columnspacing=.8)
+    comparators = PUBLISHED[1:] + BASELINES
+    settings = [(c, x) for c in CUTOFFS for x in CONTEXTS]
+    q = paired[paired.variant.eq(PRIMARY) & paired.quantity.eq('ap')].set_index(['comparator', 'cutoff', 'context'])
+    cell = lambda column: np.array([[q.loc[(m, c, x), column] for c, x in settings] for m in comparators])
+    values, low, high = cell('beacon_minus'), cell('ci_low'), cell('ci_high')
+    cmap = LinearSegmentedColormap.from_list('beacon_difference', ['#E8803A', '#FFFFFF', '#1B9E77'])
+    image = ax.imshow(values, cmap=cmap, vmin=-.05, vmax=.05, aspect='auto')
+    rows, columns = np.nonzero((low > 0) | (high < 0))
+    ax.scatter(columns, rows, s=5, color='#333333', linewidths=0)
+    for x in (3.5, 7.5):
+        ax.axvline(x, color='white', lw=2.5)
+    ax.axhline(len(PUBLISHED) - 1.5, color='white', lw=2.5)
+    ax.set_xticks(range(len(settings)), [CONTEXTS[x].replace('Re-stimulated', 'Re-stim.') for _, x in settings], fontsize=6, rotation=30, ha='right')
+    ax.set_yticks(range(len(comparators)), comparators)
+    ax.tick_params(length=0)
+    for side in ax.spines.values():
+        side.set_visible(False)
+    for k, cutoff in enumerate(CUTOFFS):
+        ax.text(1.5 + 4 * k, -.75, f'Prior: edges reported by {cutoff}', ha='center', va='bottom', fontsize=6.6)
+    ax.set_title('Mean per-regulator AP, BEACON minus each method', loc='left', fontsize=8.2, pad=14)
+    ax.text(-.063, 1.095, 'B', transform=ax.transAxes, fontsize=10, weight='bold', va='bottom')
+    ax.legend([Line2D([], [], marker='o', ls='', color='#333333', ms=2.2)], ['95% interval excludes zero'], frameon=False,
+              fontsize=6.2, loc='upper right', bbox_to_anchor=(1, 1.19), handletextpad=.3)
+    fig.colorbar(image, cax=fig.add_subplot(grid[1, 1]), label='Difference in AP')
+    return fig
 
-    ax = fig.add_subplot(grid[1, 1])
+
+def concentration_figure(concentration):
+    """Share of later-reported edges whose regulator was among the 10% with the most prior edges."""
+    fig, ax = plt.subplots(figsize=(3.4, 2.7), layout='constrained')
     shades = dict(zip(CONTEXTS, ['#707070', '#969696', '#B8B8B8', '#DEDEDE']))
     width = .8 / len(CONTEXTS)
     for k, (context, name) in enumerate(CONTEXTS.items()):
@@ -78,8 +96,7 @@ def draw(metrics, paired, concentration):
     ax.set_xticks(range(len(CUTOFFS)), [str(c) for c in CUTOFFS]); ax.set_xlabel('Cutoff year'); ax.set_ylim(0, 1)
     ax.set_ylabel('Share of later edges')
     ax.set_title('Later edges on the 10% of regulators\nwith the most prior edges', loc='left', fontsize=8.2)
-    ax.text(-.2, 1.02, 'C', transform=ax.transAxes, fontsize=10, weight='bold', va='bottom')
-    ax.legend(frameon=False, fontsize=6, loc='upper center', bbox_to_anchor=(.5, -.17), ncol=4, handlelength=1, columnspacing=.8)
+    ax.legend(frameon=False, fontsize=6, loc='upper center', bbox_to_anchor=(.5, -.2), ncol=4, handlelength=1, columnspacing=.8)
     return fig
 
 
@@ -125,9 +142,10 @@ def main():
     args = parser.parse_args()
     args.out.mkdir(parents=True, exist_ok=False)
     metrics, paired, concentration = load(args.source)
-    fig = draw(metrics, paired, concentration); relabel(fig)
-    for extension in ('png', 'pdf'):
-        fig.savefig(args.out / f'temporal_validation.{extension}', dpi=300, bbox_inches='tight')
+    for name, fig in (('temporal_validation', draw(metrics, paired)), ('temporal_concentration', concentration_figure(concentration))):
+        relabel(fig)
+        for extension in ('png', 'pdf'):
+            fig.savefig(args.out / f'{name}.{extension}', dpi=300, bbox_inches='tight')
     main_table, robustness = tables(metrics, paired)
     (args.out / 'temporal_table.tex').write_text(main_table + '\n')
     (args.out / 'temporal_robustness.tex').write_text(robustness + '\n')
