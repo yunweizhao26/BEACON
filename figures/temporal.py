@@ -97,8 +97,8 @@ def concentration_figure(concentration):
                edgecolor='#555555', linewidth=.3, label=name)
     ax.axhline(.1, color='#555555', lw=.7, ls='--')
     ax.set_xticks(range(len(CUTOFFS)), [str(c) for c in CUTOFFS]); ax.set_xlabel('Cutoff year'); ax.set_ylim(0, 1)
-    ax.set_ylabel('Share of later discoveries')
-    ax.set_title('Later discoveries on the 10% of regulators\nwith the most prior edges', loc='left', fontsize=8.2)
+    ax.set_ylabel('Share of held-out edges')
+    ax.set_title('Held-out edges on the 10% of regulators\nwith the most known edges', loc='left', fontsize=8.2)
     ax.legend(frameon=False, fontsize=6, loc='upper center', bbox_to_anchor=(.5, -.2), ncol=4, handlelength=1, columnspacing=.8)
     return fig
 

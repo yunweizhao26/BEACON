@@ -13,7 +13,7 @@ EVALUATE = ("#DCEFDD", "#2F855A")
 LEGEND = [(DATA, "Data"), (LEARN, "Representation learning"), (SCORE, "Pair scoring"),
           (OUTPUT, "Ranked output"), (EVALUATE, "Evaluation")]
 TOP, BOTTOM, MIDDLE = (4.3, 5.7), (.65, 2.05), (2.55, 3.8)
-EVALUATIONS = [((4.45, 5.7), "Held-out reference edges", "Fixed pools in four BEELINE contexts"),
+EVALUATIONS = [((4.45, 5.7), "Held-out edges", "Fixed pools in four BEELINE contexts"),
                ((2.55, 3.8), "K562 assays", "Perturb-seq responses and promoter binding"),
                ((.65, 1.9), "Primary T cells and RPE1", "Perturb-seq responses and TRRUST target genes")]
 
@@ -60,7 +60,7 @@ def draw():
 
     box(.2, 1.9, TOP, "Partial GRN", "known edges", DATA, stacked=True)
     box(.2, 1.9, BOTTOM, "scRNA-seq", "genes × cells", DATA, stacked=True)
-    box(2.3, 4.1, TOP, "Labeled\npairs", "revealed edges,\nsampled pairs", DATA, stacked=True)
+    box(2.3, 4.1, TOP, "Labeled\npairs", "known edges,\nunlabeled pairs", DATA, stacked=True)
     box(2.3, 4.1, BOTTOM, "Factor\nanalysis", "gene features")
     box(4.5, 6.6, TOP, "Pair\ndecoder", "trains the encoder")
     box(4.5, 6.6, BOTTOM, "Shared\nencoder", "one vector per gene")

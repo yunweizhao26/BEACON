@@ -196,7 +196,7 @@ def plot_network_curves(precision: pd.DataFrame, out_path: Path) -> None:
 def add_distribution_annotation(ax: plt.Axes, labels: pd.Series) -> None:
     pos_n = int(labels.sum())
     neg_n = int(len(labels) - pos_n)
-    text = f"Sampled unlabeled n = {neg_n:,}\nReference positive n = {pos_n:,}"
+    text = f"Sampled unlabeled n = {neg_n:,}\nHeld-out edges n = {pos_n:,}"
     ax.text(
         0.20,
         0.94,
@@ -231,7 +231,7 @@ def plot_distribution(ax: plt.Axes, data: pd.DataFrame, title: str | None = None
         fill=True,
         alpha=0.10,
         linewidth=1.35,
-        label="Reference positive",
+        label="Held-out edge",
         bw_adjust=0.65,
         clip=(0, 1),
         cut=0,
@@ -284,7 +284,7 @@ def plot_category_distribution(predictions: pd.DataFrame, out_path: Path) -> Non
             ax.set_ylabel("")
     handles = [
         Line2D([0], [0], color=UNLABELED_COLOR, linewidth=1.5, label="Sampled unlabeled"),
-        Line2D([0], [0], color=POSITIVE_COLOR, linewidth=1.5, label="Reference positive"),
+        Line2D([0], [0], color=POSITIVE_COLOR, linewidth=1.5, label="Held-out edge"),
     ]
     fig.legend(handles=handles, loc="lower center", bbox_to_anchor=(0.5, 0.01), ncol=2, frameon=False)
     fig.subplots_adjust(left=0.09, right=0.995, top=0.96, bottom=0.17, wspace=0.15, hspace=0.29)

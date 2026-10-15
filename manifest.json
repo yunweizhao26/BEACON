@@ -198,15 +198,15 @@
     },
     {
       "path": "figures/drawing.py",
-      "sha256": "6dcf49c279aa45c4b6e241fd2538dd1e8e23a884dea9bf8d83ac519f63ceb69b"
+      "sha256": "36bfd1a52d449e5a7b621413edb3e0954056b90eccd2f93ef85fe8359c9f488b"
     },
     {
       "path": "figures/overview.py",
-      "sha256": "348b597363d1e7defd1e7fef7c916495717bea7e37f445e99c36484aaa33a8a0"
+      "sha256": "6839d2f3a62686ea177dbd4d2e0c73cc261e632b4533cc2a01ebdef99f050459"
     },
     {
       "path": "figures/precision.py",
-      "sha256": "5d8709c6f1786dfa88494257a1cd4d018aab2f9a53c87eddba323fedb7b6acb2"
+      "sha256": "3ec0e8e33e1597d446567a44997323ec30781ce229cbcf2852efc0c1b875d9bf"
     },
     {
       "path": "figures/render.py",
@@ -230,7 +230,7 @@
     },
     {
       "path": "figures/temporal.py",
-      "sha256": "d5313f09c1569c28766898a1e07c5b35fb81301241700e45a7b51560438eb565"
+      "sha256": "32441f93cd12625d14566fa5f6f64195bd7ab12bb27fd210b0bd0d8f66d74453"
     },
     {
       "path": "preparation/README.md",

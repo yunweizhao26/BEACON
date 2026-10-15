@@ -127,7 +127,7 @@ def prior_completion(coverage, primary, excluded, save):
         ax.set_title(title, pad=3); ax.set_xticks([5,20,40,80]); ax.set_ylim(bottom=0)
         ax.yaxis.set_major_locator(MaxNLocator(4)); light_grid(ax)
         if j == 0: ax.set_ylabel('Pooled AUPRC')
-        ax.set_xlabel('Prior revealed (%)')
+        ax.set_xlabel('Known edges (%)')
         ax.text(.02,.97,chr(ord('A')+j),transform=ax.transAxes,weight='bold',va='top',fontsize=9)
     axes = [fig.add_subplot(bottom_gs[0]), fig.add_subplot(bottom_gs[1])]
     methods = list(FIG2_STYLE)
@@ -283,7 +283,7 @@ def cross_context(tcells, matched, matched_errors, rpe1, trrust, trrust_chance, 
     for j, (metric, title, label, chance) in enumerate((('auroc', 'TRRUST same-regulator AUROC', 'AUROC', .5),
                                                          ('average_precision', 'TRRUST regulator-weighted AP', 'Average precision', trrust_chance))):
         ax = fig.add_subplot(gs[2, j])
-        grouped_bars(ax, ['All supported pairs', 'DoRothEA overlap removed'], trrust[metric], chance=chance)
+        grouped_bars(ax, ['All held-out edges', 'DoRothEA overlap removed'], trrust[metric], chance=chance)
         if metric == 'auroc':
             ax.set_ylim(.4, None)
         ax.set_ylabel(label)
@@ -375,7 +375,7 @@ def specificity_regimes(fixed, external, null=None):
                 ax.set_title(context, fontsize=8)
                 ax.tick_params(axis='x', labelbottom=True)
             else:
-                ax.set_xlabel('Revealed edges per regulator', fontsize=6.8)
+                ax.set_xlabel('Known edges per regulator', fontsize=6.8)
         axes[row, 0].set_ylabel(label)
         axes[row, 0].text(-.42, 1.04, 'AB'[row], transform=axes[row, 0].transAxes, fontsize=10, weight='bold', va='bottom')
     axes[0, 0].text((low * high) ** .5, axes[0, 0].get_ylim()[1], 'Perturbation-\nassay priors', ha='center', va='top', fontsize=5.6, color='#444444')
