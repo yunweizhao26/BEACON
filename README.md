@@ -122,7 +122,7 @@ python -m tests.test_equivalence --out results/equivalence
 python -m tests.test_evaluation --out results/evaluation_test
 ```
 
-The identity test checks 16 prediction cases bitwise and inducing metrics separately. The evaluation test checks 1,176 in-scope key numbers at absolute tolerance 1e-9. The historical L40S test results predate this patch; the revised source and repacked bundle require fresh validation. Optional [Slurm wrappers](tests/equivalence.sbatch) accept a configurable Python and require your account and partition.
+The identity test checks 16 prediction cases bitwise and inducing metrics separately. The evaluation test checks 1,148 in-scope key numbers at absolute tolerance 1e-9. The historical L40S test results predate this patch; the revised source and repacked bundle require fresh validation. Optional [Slurm wrappers](tests/equivalence.sbatch) accept a configurable Python and require your account and partition.
 
 ## License
 
