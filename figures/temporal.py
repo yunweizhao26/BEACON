@@ -63,12 +63,12 @@ def draw(metrics, paired):
     values, low, high = cell('beacon_minus'), cell('ci_low'), cell('ci_high')
     cmap = LinearSegmentedColormap.from_list('beacon_difference', ['#E8803A', '#FFFFFF', '#1B9E77'])
     image = ax.imshow(values, cmap=cmap, vmin=-.05, vmax=.05, aspect='auto')
-    # Each cell prints its difference; bold marks a 95% interval that excludes zero.
+    # Each cell prints its difference; grey marks a 95% interval that includes zero.
     for (row, column), value in np.ndenumerate(values):
         excludes = low[row, column] > 0 or high[row, column] < 0
         text = f'{value:.3f}' if round(value, 3) else '0.000'
         ax.text(column, row, text.replace('-', '−'), ha='center', va='center', fontsize=6,
-                weight='bold' if excludes else 'normal', color='#111111' if excludes else '#6E6E6E')
+                color='#111111' if excludes else '#A3A3A3')
     for x in (3.5, 7.5):
         ax.axvline(x, color='white', lw=2.5)
     ax.axhline(len(PUBLISHED) - 1.5, color='white', lw=2.5)
@@ -81,7 +81,7 @@ def draw(metrics, paired):
         ax.text(1.5 + 4 * k, -.75, f'Prior: edges discovered by {cutoff}', ha='center', va='bottom', fontsize=6.6)
     ax.set_title('Mean per-regulator AP, BEACON minus each method', loc='left', fontsize=8.2, pad=14)
     ax.text(-.063, 1.095, 'B', transform=ax.transAxes, fontsize=10, weight='bold', va='bottom')
-    ax.text(1, 1.095, 'Bold numbers: 95% interval excludes zero', transform=ax.transAxes, ha='right', va='bottom', fontsize=6.2)
+    ax.text(1, 1.095, 'Grey numbers: 95% interval includes zero', transform=ax.transAxes, ha='right', va='bottom', fontsize=6.2)
     fig.colorbar(image, cax=fig.add_subplot(grid[1, 1]), label='Difference in AP')
     return fig
 
