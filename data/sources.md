@@ -13,7 +13,6 @@ These sources and accessions are transcribed from the recorded research receipts
 | TRRUST expression | GEO GSE162632, Randolph metadata Figshare 24311335, GENCODE 41 annotation and the recorded Weinstock reference-gene table. Human TRRUST release 2; its original download URL was not recovered. |
 | Curated prior | [OmniPath](https://omnipathdb.org): human DoRothEA levels A/B. Use the frozen source-restricted prior and its publication/source audit, not a new unrestricted query. |
 | Human TF catalogue | [Human TF database](https://humantfs.ccbr.utoronto.ca/download.php), recorded database extract 1.01. |
-| scGPT input | [Checkpoint](https://huggingface.co/wanglab/scGPT-human), [upstream code](https://github.com/bowang-lab/scGPT). Token embeddings, complete union, missing indicators and evaluation-universe mappings are frozen in the bundle. |
 | Temporal holdout | [OmniPath](https://omnipathdb.org) CollecTRI TF--target interactions with their PubMed references (Müller-Dott et al., Nucleic Acids Res. 2023). Publication years of the referenced PubMed records were retrieved on 8 October 2026 with the NCBI E-utilities summary service in JSON requests of 500 identifiers. The bundle stores the reference table and the year of every dated record. |
 | Geneformer input for scRegNet | GF-20L-95M-i4096, identified by the recorded embedding/checkpoint hashes. Original download location remains unresolved. |
 

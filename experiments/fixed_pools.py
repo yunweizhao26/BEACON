@@ -49,11 +49,11 @@ def predict_pairs(projected, model, likelihood, edges, *, device="cuda", batch_s
 
 def fit(expression, split, *, seed=42, ratio=5, snn_weight=0.0,
         random_features=False, permuted_features=False, without_encoder=False,
-        components=64, pca=False, inducing_points=500, diagnostics=False,
+        components=64, inducing_points=500, diagnostics=False,
         decoder=True, logistic=True, nnpu=None,
         device="cuda", features=None, score_name="beacon", decoder_validation=True):
     seed_optimization(seed)
-    fa = expression_features(expression, components=components, pca=pca) if features is None else features
+    fa = expression_features(expression, components=components) if features is None else features
     features = feature_control(fa, random_features=random_features, permuted_features=permuted_features)
     training, projected, model, likelihood = fit_features(features, split["train"], seed=seed, ratio=ratio,
         snn_weight=snn_weight, without_encoder=without_encoder, inducing_points=inducing_points, device=device)

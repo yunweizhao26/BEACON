@@ -60,7 +60,7 @@ def unit():
                           np.random.default_rng(2718).choice(features.ravel(), size=features.shape, replace=True))
     assert np.array_equal(feature_control(features, random_features=True), np.random.default_rng(2718).normal(size=features.shape).astype(np.float32))
     assert np.array_equal(feature_control(features, permuted_features=True), features[np.random.default_rng(2718).permutation(20)])
-    for name in ("snn_weight", "random_features", "permuted_features", "without_encoder", "components", "pca", "inducing_points", "diagnostics", "decoder", "logistic", "nnpu"):
+    for name in ("snn_weight", "random_features", "permuted_features", "without_encoder", "components", "inducing_points", "diagnostics", "decoder", "logistic", "nnpu"):
         assert inspect.signature(fit).parameters[name].kind == inspect.Parameter.KEYWORD_ONLY
     training = Training(snn_weight=1)
     encoder = training.encoder_class(64, 16)

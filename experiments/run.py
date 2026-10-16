@@ -5,17 +5,15 @@ import json
 import numpy as np
 from beacon.data import Bundle, RELEASE, write_result
 
-def execute(bundle, experiment, *, device="cuda", components=64, pca=False, scgpt=False, inducing_points=500):
+def execute(bundle, experiment, *, device="cuda", components=64, inducing_points=500):
     from experiments import fixed_pools, sampled_pairs, external, rpe1, trrust
     from experiments.expression import transform
-    from experiments.sensitivity import scgpt_features, inducing
+    from experiments.sensitivity import inducing
     suite, condition, reference = experiment["suite"], experiment["condition"], experiment["reference"]
-    common = dict(components=components, pca=pca, inducing_points=inducing_points, device=device)
+    common = dict(components=components, inducing_points=inducing_points, device=device)
     if suite == "inducing":
         return {}, {"metric_only": True, "fits": inducing(bundle, experiment, device=device)}
     if suite == "trrust":
-        if scgpt:
-            common["features"] = scgpt_features(bundle, bundle.manifest["trrust"]["genes"], universe="trrust_" + bundle.manifest["trrust"]["tasks"][condition["task"]]["context"], pca=pca)
         return trrust.fit(bundle, condition["task"], **common)
     if suite in ("external", "rpe1"):
         context = condition.get("context", "rpe1")
@@ -26,15 +24,11 @@ def execute(bundle, experiment, *, device="cuda", components=64, pca=False, scgp
             if not np.array_equal(data[key], training[key]):
                 raise ValueError(f"Prepared and training axes differ: {key}")
         data.update(training)
-        if scgpt:
-            common["features"] = scgpt_features(bundle, data["genes"], symbols=data["symbols"], universe={"k562":"k562_external", "rpe1":"rpe1_external"}.get(context, context), pca=pca)
         if suite == "rpe1":
             return rpe1.fit(bundle, data, **common)
         return external.fit(data, seed=condition["seed"], random_features=condition["control"] == "graph_only",
                             permuted_features=condition["control"] == "permuted", **common)
     expression, genes, truth, tfs = bundle.dataset(condition["dataset"])
-    if scgpt:
-        common["features"] = scgpt_features(bundle, genes, universe="beeline_DS" + str(condition["dataset"]), pca=pca)
     if suite == "sampled_pairs":
         dataset = next(d for d in bundle.manifest["datasets"] if d["dataset"] == condition["dataset"])
         split = {k: bundle.array(v) for k, v in dataset["sampled"].items()}
@@ -67,8 +61,6 @@ def main(suite=None, context=None):
     p.add_argument("--out", type=Path)
     p.add_argument("--device", choices=("cpu", "cuda"), default="cuda")
     p.add_argument("--components", type=int, default=64)
-    p.add_argument("--pca", action="store_true")
-    p.add_argument("--scgpt", action="store_true")
     p.add_argument("--inducing-points", type=int, default=500)
     args = p.parse_args()
     bundle = Bundle(args.config)
@@ -81,7 +73,7 @@ def main(suite=None, context=None):
     if suite and experiment["suite"] != suite:
         raise ValueError("Case does not belong to the requested experiment")
     arrays, log = execute(bundle, experiment, device=args.device, components=args.components,
-                          pca=args.pca, scgpt=args.scgpt, inducing_points=args.inducing_points)
+                          inducing_points=args.inducing_points)
     output = args.out or RELEASE / "results" / experiment["suite"]
     write_result(output, arrays, log, experiment["condition"])
     print(json.dumps({"output": str(output), "condition": experiment["condition"]}))

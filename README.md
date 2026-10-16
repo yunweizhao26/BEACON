@@ -58,7 +58,7 @@ python -m figures.run main --only cross_context_validation --out results/cross_c
 python -m figures.run main --only specificity_regimes --out results/specificity_regimes
 ```
 
-Temporal holdout (Figure 4 and Supplementary Tables S17 and S18). The priors hold the CollecTRI edges first reported up to 2000, 2005 or 2010, and the saved scores of every method are in the data bundle:
+Temporal holdout (Figure 4 and Supplementary Tables S16 and S17). The priors hold the CollecTRI edges first reported up to 2000, 2005 or 2010, and the saved scores of every method are in the data bundle:
 
 ```bash
 python -m preparation.temporal --check
@@ -95,11 +95,10 @@ python -m figures.run tables --only gp_inducing_sensitivity --out results/gp_ind
 python -m figures.run tables --only optimization_seeds --out results/optimization_seeds
 python -m figures.run tables --only tcell_eligibility --out results/tcell_eligibility
 python -m figures.run sensitivity --only factor_components --out results/factor_components
-python -m figures.run sensitivity --only input_features --out results/input_features
 python -m figures.run checks --out results/review_checks
 python -m figures.run tables --only reciprocal_edges --out results/table_s8
-python -m figures.run tables --only specificity_fixed --out results/table_s15
-python -m figures.run tables --only specificity_external --out results/table_s16
+python -m figures.run tables --only specificity_fixed --out results/table_s14
+python -m figures.run tables --only specificity_external --out results/table_s15
 ```
 
 Factor sensitivity retains the prespecified 64-component setting.

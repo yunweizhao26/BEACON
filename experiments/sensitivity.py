@@ -1,4 +1,4 @@
-"""Factor/PCA/scGPT inputs, optimization seeds, and inducing counts."""
+"""Refits of the sparse GP with different numbers of inducing inputs."""
 import numpy as np
 import torch
 from beacon.model import Training
@@ -31,36 +31,6 @@ def inducing(bundle, experiment, *, device="cuda"):
             fit[pool] = metrics(split[key][tuple(edges.T)], scores, edges[:, 0])
         fits[str(count)] = fit
     return fits
-
-def scgpt_features(bundle, genes, *, universe, symbols=None, pca=False):
-    metadata = bundle.manifest["scgpt"]
-    factors = bundle.arrays(metadata["principal_features" if pca else "factor_features"])
-    keys = ["gene_key", "ensembl_id", "symbol"]
-    union = bundle.frame(metadata["genes"], sep="\t", keep_default_na=False, dtype={k:str for k in keys})
-    mapping = bundle.frame(metadata["universes"][universe], sep="\t", keep_default_na=False, dtype={k:str for k in keys})
-    manifest = bundle.json(metadata["manifest"])
-    if manifest["embedding_source"] != "scGPT":
-        raise ValueError("Wrong embedding producer")
-    genes = np.asarray(genes, str)
-    symbols = genes if symbols is None else np.asarray(symbols, str)
-    assert len(genes) == len(mapping)
-    ens = np.char.startswith(genes, "ENSG")
-    renamed = {(r["source_ensembl_id"], r["census_ensembl_id"]) for r in manifest.get("renamed_ensembl_ids", [])}
-    assert all(g.split(".")[0] == m or (g.split(".")[0],m) in renamed for g,m in zip(genes[ens],mapping.ensembl_id.to_numpy()[ens]))
-    assert np.array_equal(symbols[~ens], mapping.symbol.to_numpy()[~ens])
-    selected = union.set_index("gene_key").index.get_indexer(mapping.gene_key)
-    assert (selected >= 0).all() and np.array_equal(union.iloc[selected][keys], mapping[keys])
-    if pca:
-        # The original runner reads the exported decimal table then casts float32.
-        exported = bundle.frame(metadata["exported"], sep="\t", keep_default_na=False)
-        assert np.array_equal(exported[keys], union[keys])
-        result = exported[[f"f{i:02d}" for i in range(64)]].to_numpy(np.float32)[selected]
-    else:
-        assert np.array_equal(factors["genes"], union.gene_key)
-        result = factors["features"][selected]
-    if result.shape != (len(genes), 64) or not np.isfinite(result).all():
-        raise ValueError("Invalid aligned scGPT features")
-    return result
 
 if __name__ == "__main__":
     from experiments.run import main

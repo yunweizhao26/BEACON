@@ -5,7 +5,7 @@ import gpytorch
 from beacon.features import expression_features
 from experiments.fixed_pools import seed_optimization, fit_features
 
-def fit(bundle, task_index, *, components=64, pca=False, features=None, inducing_points=500, device="cuda"):
+def fit(bundle, task_index, *, components=64, features=None, inducing_points=500, device="cuda"):
     manifest = bundle.manifest["trrust"]
     task = manifest["tasks"][task_index]
     seed_optimization(task["seed"], cuda_all=True)
@@ -28,7 +28,7 @@ def fit(bundle, task_index, *, components=64, pca=False, features=None, inducing
         raise ValueError("Evaluated TRRUST pair occurs in training")
     if set(map(tuple, edges[:, ::-1])) & set(map(tuple, positive)):
         raise ValueError("Evaluated reciprocal TRRUST edge occurs in prior")
-    features = expression_features(expression, components=components, pca=pca) if features is None else features
+    features = expression_features(expression, components=components) if features is None else features
     training, projected, model, likelihood = fit_features(features, train, seed=task["seed"],
         inducing_points=inducing_points, device=device)
     # The frozen task scores the complete evaluation list in one batch, concatenating on the device.

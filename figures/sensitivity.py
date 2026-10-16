@@ -1,10 +1,10 @@
-"""Factor and input sensitivity table rows; K=64 stays prespecified."""
+"""Factor-component sensitivity table rows; K=64 stays prespecified."""
 import re
 import numpy as np
 import pandas as pd
-COLS = ["8", "16", "32", "64", "128", "256", "PCA64"]
-ABBR = {"GNNLink": "GNNLink", "Topology control": "Topology", "Prior target in-degree": "In-degree",
-        "Prior regulator out-degree": "Out-degree", "RegGAIN": "RegGAIN", "Target detection": "Detection",
+COLS = ["8", "16", "32", "64", "128", "256"]
+ABBR = {"GNNLink": "GNNLink", "Topology control": "Degree", "Prior target in-degree": "Target pop.",
+        "Prior regulator out-degree": "Regulator pop.", "RegGAIN": "RegGAIN", "Target detection": "Detection",
         "Validation prevalence constant": "Constant"}
 ARROW = {"above zero": r"$^{\uparrow}$", "below zero": r"$^{\downarrow}$", "includes zero": ""}
 def fmt(v, signed=False):
@@ -57,7 +57,7 @@ def order(label):
             sub = {"all": "all pairs", "overlap removed": "overlap removed"}[x[0]]
             met = {"same-regulator AUROC": "same-regulator AUROC", "AP": "AP"}[x[1]]
             return gi, (x[0] != "all", met == "AP"), f"{'AP' if met == 'AP' else 'AUROC'}, {sub}"
-        names = {"mean AUROC": "Mean AUROC", "mean AUPRC": "Mean AUPRC", "AUROC minus topology": "AUROC minus topology", "AUPRC minus topology": "AUPRC minus topology"}
+        names = {"mean AUROC": "Mean AUROC", "mean AUPRC": "Mean AUPRC", "AUROC minus topology": "AUROC minus degree baseline", "AUPRC minus topology": "AUPRC minus degree baseline"}
         return gi, (list(names).index(x[0]),), names[x[0]]
     raise ValueError(label)
 
@@ -89,27 +89,5 @@ def rows_for(values, comps, cols, colkey, groups_seen=None):
 def generate(build, destination):
     kv = build.csv("factor_endpoints"); kc = build.csv("factor_comparisons")
     k_lines, k_best = rows_for(kv, kc, COLS, "k")
-    iv = build.csv("input_endpoints"); ic = build.csv("input_comparisons")
-    idiff = build.csv("input_differences")
-    ICOLS = ["64", "PCA64", "scGPT_FA64", "scGPT_PCA64"]
-    i_lines, i_best = rows_for(iv, ic, ICOLS, "input")
-    # append paired input contrasts to each input row
-    out, it = [], iter(i_lines)
-    meta = iv.groupby("endpoint").label.first()
-    keyed = [e for e, _ in sorted(meta.items(), key=lambda kv: order(kv[1])[:2])]
-    j = 0
-    for line in i_lines:
-        if line.startswith(r"\multicolumn"):
-            out.append(line.replace("{%d}" % (len(ICOLS) + 2), "{%d}" % (len(ICOLS) + 4))); continue
-        e = keyed[j]; j += 1
-        extra = []
-        for left in ("PCA64", "scGPT_FA64"):
-            r = idiff[(idiff.endpoint == e) & (idiff.left == left) & (idiff.right == "FA64")].iloc[0]
-            d = r.difference
-            txt = f"{d:+.3f}" if abs(d) >= 0.1 else f"{d:+.4f}" if abs(d) >= 0.001 else f"{d:+.5f}"
-            extra.append(txt.replace("-", "$-$") + ARROW[r.interval_status])
-        out.append(line[:-3].rstrip() + " & " + " & ".join(extra) + r" \\")
-    i_lines = out
     build.table("factor_components", "\n".join(k_lines) + "\n", "Endpoint-specific metrics and paired intervals", "Prespecified 64-component reference")
-    build.table("input_features", "\n".join(i_lines) + "\n", "Endpoint-specific metrics and paired input differences", "FA, PCA and frozen scGPT inputs")
-    print(len(k_lines), len(i_lines)); print("\n".join(k_lines[:8])); print("\n".join(i_lines[-12:]))
+    print(len(k_lines)); print("\n".join(k_lines[:8]))

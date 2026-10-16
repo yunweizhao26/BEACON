@@ -6,10 +6,10 @@ from evaluation.metrics import degree_features
 from experiments.fixed_pools import seed_optimization, fit_features, predict_pairs
 
 def fit(data, *, seed=42, random_features=False, permuted_features=False, components=64,
-        pca=False, features=None, inducing_points=500, device="cuda"):
+        features=None, inducing_points=500, device="cuda"):
     expression, train, tfs = data["expression"], data["train"], data["tf_indices"]
     seed_optimization(seed)
-    fa = expression_features(expression, components=components, pca=pca) if features is None else features
+    fa = expression_features(expression, components=components) if features is None else features
     features = feature_control(fa, random_features=random_features, permuted_features=permuted_features)
     training, projected, model, likelihood = fit_features(features, train, seed=seed, inducing_points=inducing_points, device=device)
     edges = np.argwhere(train != -1)

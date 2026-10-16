@@ -24,12 +24,11 @@ beacon_data/
     features.npz
     rng.npz
     python_rng.json
-  scgpt/genes.tsv
   sensitivity/factor_sensitivity/endpoints.csv
   tables/key_numbers.csv
 ```
 
-This is an excerpt. The bundle contains 44 BEELINE panels, two SERGIO inputs, fixed splits, prepared external inputs, calibrated labels, model and comparator predictions, RPE1 FA/RNG caches, scGPT features and sensitivity metrics.
+This is an excerpt. The bundle contains 44 BEELINE panels, two SERGIO inputs, fixed splits, prepared external inputs, calibrated labels, model and comparator predictions, RPE1 FA/RNG caches and sensitivity metrics.
 
 Paths describe scientific conditions: context, reference, panel size, method, coverage, corruption, ratio, split and optimization seed. Each manifest entry records its relative `path`, `conditions`, `original_sha256`, output `sha256`, sizes and array shapes/dtypes. Shared references resolve to one file. There is one top-level manifest. Experimental records use plain `setting` identifiers. Key numbers contain `section`, `item`, `context`, `metric` and `value`.
 
@@ -59,4 +58,4 @@ The reader deliberately uses ordinary manifest records; it does not search for l
 - Add the saved Geneformer embedding NPZs for mHSC-E and the four external contexts, preserving gene order and the unmapped-gene zero vectors. Register asset IDs under `comparator_training.geneformer_embeddings` with keys `mHSC-E`, `k562`, `tcell_resting`, `tcell_stimulated` and `rpe1`. Each NPZ contains `genes` and `embeddings`; include checkpoint/dictionary provenance and upstream training receipts.
 - Update every changed asset checksum, size and array metadata, retain shared record aliases, and refresh the archive checksum only after the reproduction checks pass.
 
-Table S16 distinguishes evaluated regulators from those with a response-positive tested target. Prior bins are 0, 1–2, 3–5, 6–10 and 11+ edges. The consensus uses the full evaluated population before assigning bins. Table S15 and Figure 3 are recomputed from full test-pool scores; their consensus cannot be reconstructed from already-excluded pairs.
+Table S15 distinguishes evaluated regulators from those with a response-positive tested target. Prior bins are 0, 1–2, 3–5, 6–10 and 11+ edges. The consensus uses the full evaluated population before assigning bins. Table S15 and Figure 3 are recomputed from full test-pool scores; their consensus cannot be reconstructed from already-excluded pairs.

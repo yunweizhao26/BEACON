@@ -1,8 +1,8 @@
 """Expression features; reduction always uses random_state=0."""
 import numpy as np
-from sklearn.decomposition import FactorAnalysis, PCA
+from sklearn.decomposition import FactorAnalysis
 from sklearn.preprocessing import StandardScaler
-def expression_features(data, *, components=64, pca=False, scale=False):
+def expression_features(data, *, components=64, scale=False):
     if isinstance(components, bool) or not isinstance(components, int) or components < 1:
         raise ValueError("components must be a positive integer")
     x = np.array(data) if not isinstance(data, np.ndarray) else data
@@ -10,7 +10,7 @@ def expression_features(data, *, components=64, pca=False, scale=False):
         raise ValueError("Expected finite genes by cells expression")
     if scale:
         x = StandardScaler().fit_transform(x)
-    model = (PCA if pca else FactorAnalysis)(n_components=components, random_state=0)
+    model = FactorAnalysis(n_components=components, random_state=0)
     return np.array(model.fit_transform(x))
 def feature_control(features, *, random_features=False, permuted_features=False):
     if random_features and permuted_features:

@@ -20,11 +20,11 @@ def restore_factor_state(bundle):
     torch.set_rng_state(torch.from_numpy(state["torch_cpu_state"]))
     return bundle.array(cache["features"])
 
-def fit(bundle, data, *, components=64, pca=False, features=None, inducing_points=500, device="cuda"):
+def fit(bundle, data, *, components=64, features=None, inducing_points=500, device="cuda"):
     cached = restore_factor_state(bundle)
     if features is None:
-        features = cached if components == 64 and not pca else expression_features(
-            np.asarray(data["expression"], dtype=np.float32), components=components, pca=pca)
+        features = cached if components == 64 else expression_features(
+            np.asarray(data["expression"], dtype=np.float32), components=components)
     training, projected, model, likelihood = fit_features(features, data["train"], device=device,
         inducing_points=inducing_points)
     n, tfs = len(data["genes"]), data["tf_indices"]
