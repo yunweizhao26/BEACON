@@ -1,0 +1,15 @@
+data_root = "../beacon_data"
+bundle_parts = [
+  "https://zenodo.org/records/23108369/files/beacon_data.tar.gz.part00?download=1",
+  "https://zenodo.org/records/23108369/files/beacon_data.tar.gz.part01?download=1",
+  "https://zenodo.org/records/23108369/files/beacon_data.tar.gz.part02?download=1",
+  "https://zenodo.org/records/23108369/files/beacon_data.tar.gz.part03?download=1",
+  "https://zenodo.org/records/23108369/files/beacon_data.tar.gz.part04?download=1",
+  "https://zenodo.org/records/23108369/files/beacon_data.tar.gz.part05?download=1",
+  "https://zenodo.org/records/23108369/files/beacon_data.tar.gz.part06?download=1",
+  "https://zenodo.org/records/23108369/files/beacon_data.tar.gz.part07?download=1",
+  "https://zenodo.org/records/23108369/files/beacon_data.tar.gz.part08?download=1",
+  "https://zenodo.org/records/23108369/files/beacon_data.tar.gz.part09?download=1",
+  "https://zenodo.org/records/23108369/files/beacon_data.tar.gz.part10?download=1",
+]
+bundle_sha256 = "ff6448526043d5d04f40c2f291419c176ca47128519214e0dbd6113f6e397841"
